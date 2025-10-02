@@ -9,10 +9,7 @@ import SwiftUI
 
 struct AIView: View {
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        Text("Yapay Zeka Öneri Ekranı (Placeholder)")
+            .padding()
     }
-}
-
-#Preview {
-    AIView()
 }

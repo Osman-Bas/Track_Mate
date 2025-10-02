@@ -8,11 +8,32 @@
 import SwiftUI
 
 struct HomeView: View {
+    @EnvironmentObject var userVM: UserViewModel
+    @StateObject var taskVM = TaskViewModel()
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        TabView {
+            DashboardView()
+                .environmentObject(userVM)
+                .environmentObject(taskVM)
+                .tabItem {
+                    Label("Ana Menü", systemImage: "house.fill")
+                }
+            
+            AIView()
+                .tabItem {
+                    Label("AI Öneri", systemImage: "brain.head.profile")
+                }
+            
+            StatsView()
+                .tabItem {
+                    Label("İstatistikler", systemImage: "chart.bar.fill")
+                }
+            
+            SettingsView()
+                .tabItem {
+                    Label("Ayarlar", systemImage: "gear")
+                }
+        }
     }
-}
-
-#Preview {
-    HomeView()
 }
