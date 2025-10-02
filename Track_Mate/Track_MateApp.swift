@@ -8,10 +8,10 @@
 import SwiftUI
 
 @main
-struct Track_MateApp: App {
+struct TrackMateApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            LoginView()
         }
     }
 }
