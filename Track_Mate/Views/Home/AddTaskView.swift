@@ -33,106 +33,140 @@ struct AddTaskView: View {
     
     var body: some View {
         ZStack {
-                   // MARK: - Arka Plan Blur
-                   Color.black.opacity(0.4)
-                       .ignoresSafeArea()
+            // MARK: - Arka Plan Blur
+            Color.black.opacity(0.4)
+                .ignoresSafeArea()
+            
+            VStack(spacing: 20) {
+                
+                // MARK: - Başlık
+                Text("Yeni Görev")
+                    .font(.title.bold())
+                    .foregroundColor(.black)
+                    .padding(.top, 15)
+                
+                // MARK: - Kart Form
+                VStack(spacing: 12) {
+                    
+                    // Başlık
+                    TextField("Başlık girin", text: $title)
+                        .padding()
+                        .background(.ultraThinMaterial)
+                        .cornerRadius(12)
+                        
+                    
+                    // Açıklama
+                    TextField("Açıklama", text: $description)
+                        .padding()
+                        .background(.ultraThinMaterial)
+                        .cornerRadius(12)
+                        .foregroundColor(.black)
+                        .scrollContentBackground(.hidden)
+                        .frame(minHeight: 60, maxHeight: 120)
+                    
+                    // Saat
+                    DatePicker("Saat", selection: $time, displayedComponents: .hourAndMinute)
+                        .labelsHidden()
+                        .datePickerStyle(.wheel)
+                        .frame(maxHeight: 120)
+                        .padding()
+                        .background(.ultraThinMaterial)
+                        .cornerRadius(12)
+                    
+                    // Öncelik
+                    VStack(alignment: .leading, spacing: 8) {
+                                            Text("Öncelik")
+                                                .foregroundColor(.white.opacity(0.7))
+                                                .font(.headline)
+                                            
+                                            HStack(spacing: 10) {
+                                                ForEach(TaskPriority.allCases) { pr in
+                                                    Text(pr.rawValue)
+                                                        .fontWeight(priority == pr ? .bold : .regular)
+                                                        .foregroundColor(priority == pr ? .white : .white.opacity(0.7))
+                                                        .frame(maxWidth: .infinity)
+                                                        .padding(.vertical, 12)
+                                                        .background(
+                                                            ZStack {
+                                                                if priority == pr {
+                                                                    RoundedRectangle(cornerRadius: 12)
+                                                                        .fill(pr.color.opacity(0.3))
+                                                                        .overlay(
+                                                                            RoundedRectangle(cornerRadius: 12)
+                                                                                .stroke(pr.color, lineWidth: 1.5)
+                                                                        )
+                                                                        .shadow(color: pr.color.opacity(0.6), radius: 8)
+                                                                        .transition(.scale)
+                                                                } else {
+                                                                    RoundedRectangle(cornerRadius: 12)
+                                                                        .fill(.ultraThinMaterial)
+                                                                }
+                                                            }
+                                                        )
+                                                        .onTapGesture {
+                                                            withAnimation(.easeInOut(duration: 0.25)) {
+                                                                priority = pr
+                                                            }
+                                                        }
+                                                }
+                                            }
+                                        }
+                                        .padding(.top, 5)
+                                        
+                                    }
+                                    .padding()
+                                    .background(Color.white.opacity(0.08))
+                                    .cornerRadius(20)
+                                    .shadow(radius: 5)
+                                    .padding(.horizontal)
+                    // MARK: - Butonlar
+                    HStack(spacing: 20) {
+                        Button(action: {
+                            dismiss()
+                        }) {
+                            Text("İptal")
+                                .fontWeight(.bold)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.red.opacity(0.9))
+                                .foregroundColor(.white)
+                                .cornerRadius(15)
+                        }
+                        
+                        Button(action: {
+                            let newTask = TaskItem(title: title, isCompleted: false, date: time)
+                            taskVM.tasks.append(newTask)
+                            dismiss()
+                        }) {
+                            Text("Kaydet")
+                                .fontWeight(.bold)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(title.trimmingCharacters(in: .whitespaces).isEmpty ? Color.gray.opacity(0.6) : Color.green)
+                                .foregroundColor(.white)
+                                .cornerRadius(15)
+                        }
+                        .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
+                    }
+                    .padding(.horizontal)
+                    .padding(.bottom, 20)
+                    .padding(.horizontal,5)
                    
-                   VStack(spacing: 20) {
-                       
-                       // MARK: - Başlık
-                       Text("Yeni Görev")
-                           .font(.title.bold())
-                           .foregroundColor(.white)
-                           .padding(.top, 15)
-                       
-                       // MARK: - Kart Form
-                       VStack(spacing: 15) {
-                           
-                           // Başlık
-                           TextField("Başlık girin", text: $title)
-                               .padding()
-                               .background(.ultraThinMaterial)
-                               .cornerRadius(12)
-                           
-                           // Açıklama (normal TextEditor, placeholder yok)
-                           TextField("Açıklama", text: $description)
-                               .padding(12)
-                               .background(.ultraThinMaterial)
-                               .cornerRadius(12)
-                               .foregroundColor(.black)
-                               .scrollContentBackground(.hidden)
-                               .frame(minHeight: 60, maxHeight: 120)
-                           
-                       // Saat
-                           DatePicker("Saat", selection: $time, displayedComponents: .hourAndMinute)
-                               .labelsHidden()
-                               .datePickerStyle(.wheel)
-                               .frame(maxHeight: 120)
-                               .padding()
-                               .background(.ultraThinMaterial)
-                               .cornerRadius(12)
-                           
-                           // Öncelik
-                           Picker("Öncelik", selection: $priority) {
-                               ForEach(TaskPriority.allCases) { pr in
-                                   Text(pr.rawValue)
-                                       .tag(pr)
-                               }
-                           }
-                           .pickerStyle(.segmented)
-                           .padding(.vertical, 5)
-                       }
-                       .padding()
-                       .background(Color.white.opacity(0.08))
-                       .cornerRadius(20)
-                       .shadow(radius: 5)
-                       .padding(.horizontal)
-                       
-                       // MARK: - Butonlar
-                       HStack(spacing: 15) {
-                           Button(action: {
-                               dismiss()
-                           }) {
-                               Text("İptal")
-                                   .fontWeight(.bold)
-                                   .frame(maxWidth: .infinity)
-                                   .padding()
-                                   .background(Color.red.opacity(0.9))
-                                   .foregroundColor(.white)
-                                   .cornerRadius(15)
-                           }
-                           
-                           Button(action: {
-                               let newTask = TaskItem(title: title, isCompleted: false, date: time)
-                               taskVM.tasks.append(newTask)
-                               dismiss()
-                           }) {
-                               Text("Kaydet")
-                                   .fontWeight(.bold)
-                                   .frame(maxWidth: .infinity)
-                                   .padding()
-                                   .background(title.trimmingCharacters(in: .whitespaces).isEmpty ? Color.gray.opacity(0.6) : Color.green)
-                                   .foregroundColor(.white)
-                                   .cornerRadius(15)
-                           }
-                           .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
-                       }
-                       .padding(.horizontal)
-                       .padding(.bottom, 20)
-                       
-                       Spacer()
-                   }
-                   .padding(.top, 60) // Üstten biraz yukarı kaydırdık
-               }
-           }
-}
-
-// MARK: - Preview
-struct ModernAddTaskView_Previews: PreviewProvider {
-    static var previews: some View {
-        let taskVM = TaskViewModel()
-        AddTaskView()
-            .environmentObject(taskVM)
-            .previewDevice("iPhone 14 Pro")
+                    
+                    Spacer()
+                }
+                .padding(.top, 60) // Üstten biraz yukarı kaydırdık
+            }
+        }
     }
-}
+    
+    // MARK: - Preview
+    struct ModernAddTaskView_Previews: PreviewProvider {
+        static var previews: some View {
+            let taskVM = TaskViewModel()
+            AddTaskView()
+                .environmentObject(taskVM)
+                .previewDevice("iPhone 14 Pro")
+        }
+    }
+
