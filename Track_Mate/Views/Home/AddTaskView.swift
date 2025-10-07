@@ -30,14 +30,16 @@ struct AddTaskView: View {
     @State private var time: Date = Date()
     @State private var priority: TaskPriority = .medium
     
+    // 🎯 Banner tetikleme callback'i
+    var onSave: (() -> Void)? = nil
+    
     var body: some View {
         ZStack {
-            // MARK: - Arka Plan Blur
             Color.black.opacity(0.4)
                 .ignoresSafeArea()
             
             VStack(spacing: 20) {
-                // MARK: - Capsule
+                
                 Capsule()
                     .fill(Color.black.opacity(0.6))
                     .frame(width: 120, height: 5)
@@ -45,22 +47,18 @@ struct AddTaskView: View {
                     .padding(.top, 12)
                     .padding(.bottom, 4)
                 
-                // MARK: - Başlık
                 Text("Yeni Görev")
                     .font(.title.bold())
                     .foregroundColor(.black)
                     .padding(.top,60)
                     .padding(.bottom,10)
                 
-                // MARK: - Kart Form
                 VStack(spacing: 12) {
-                    // Başlık
                     TextField("Başlık girin", text: $title)
                         .padding()
                         .background(.ultraThinMaterial)
                         .cornerRadius(12)
                     
-                    // Açıklama
                     TextField("Açıklama", text: $description)
                         .padding()
                         .background(.ultraThinMaterial)
@@ -69,7 +67,6 @@ struct AddTaskView: View {
                         .scrollContentBackground(.hidden)
                         .frame(minHeight: 60, maxHeight: 120)
                     
-                    // Saat
                     DatePicker("Saat", selection: $time, displayedComponents: .hourAndMinute)
                         .labelsHidden()
                         .datePickerStyle(.wheel)
@@ -78,7 +75,6 @@ struct AddTaskView: View {
                         .background(.ultraThinMaterial)
                         .cornerRadius(12)
                     
-                    // Öncelik
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Öncelik")
                             .foregroundColor(.black.opacity(0.7))
@@ -124,7 +120,6 @@ struct AddTaskView: View {
                 .shadow(radius: 5)
                 .padding(.horizontal)
                 
-                // MARK: - Butonlar
                 HStack(spacing: 20) {
                     Button(action: {
                         dismiss()
@@ -139,8 +134,18 @@ struct AddTaskView: View {
                     }
                     
                     Button(action: {
-                        let newTask = TaskItem(title: title, isCompleted: false, date: time)
+                        let newTask = TaskItem(
+                            title: title,
+                            description: description,
+                            isCompleted: false,
+                            date: time,
+                            priority: priority
+                        )
                         taskVM.tasks.append(newTask)
+                        
+                        // 🎯 Banner callback
+                        onSave?()
+                        
                         dismiss()
                     }) {
                         Text("Kaydet")
@@ -158,7 +163,7 @@ struct AddTaskView: View {
                 
                 Spacer()
             }
-            .frame(maxWidth: .infinity, alignment: .top) // VStack'i üstte hizala
+            .frame(maxWidth: .infinity, alignment: .top)
         }
     }
 }
@@ -167,8 +172,10 @@ struct AddTaskView: View {
 struct ModernAddTaskView_Previews: PreviewProvider {
     static var previews: some View {
         let taskVM = TaskViewModel()
-        AddTaskView()
-            .environmentObject(taskVM)
-            .previewDevice("iPhone 14 Pro")
+        AddTaskView(onSave: {
+            print("Görev eklendi banner tetiklendi!")
+        })
+        .environmentObject(taskVM)
+        .previewDevice("iPhone 15")
     }
 }
