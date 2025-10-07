@@ -9,6 +9,8 @@ import Foundation
 struct TaskItem: Identifiable {
     var id: UUID = UUID()
     var title: String
+    var description: String = ""
     var isCompleted: Bool
     var date: Date
+    var priority: TaskPriority = .medium
 }
