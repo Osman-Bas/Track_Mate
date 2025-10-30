@@ -6,9 +6,20 @@
 //
 import Foundation
 
-struct User {
-    var id: UUID = UUID()
+struct User: Codable {
+    var id: String?
+    var fullName: String
     var username: String
     var email: String
-    var profileImage: String? // system image adı veya url olabilir
+    var profilePictureUrl: String? // system image adı veya url olabilir
+    
+    enum CodingKeys: String, CodingKey {
+        case id = "_id" // JSON'daki "_id"yi, struct'ımızdaki "id"ye ata
+        case fullName
+        case username
+        case email
+        case profilePictureUrl
+    }
 }
+
+

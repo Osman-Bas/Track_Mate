@@ -54,7 +54,7 @@ struct DashboardView: View {
                     // MARK: - Profil ve Karşılama
                     if let user = userVM.currentUser {
                         HStack(alignment: .center, spacing: 15) {
-                            Image(systemName: user.profileImage ?? "person.circle")
+                            Image(systemName: user.profilePictureUrl ?? "person.circle")
                                 .resizable()
                                 .scaledToFill()
                                 .frame(width: 60, height: 60)
@@ -257,13 +257,31 @@ struct TaskCard: View {
 // MARK: - Preview
 struct DashboardView_Previews: PreviewProvider {
     static var previews: some View {
-        let userVM = UserViewModel()
-        userVM.login(username: "Osman", email: "osman@example.com")
         
+        // --- 1. Sahte UserViewModel Hazırla ---
+        let userVM = UserViewModel()
+        
+        // Düzeltme: Artık login() çağırmıyoruz.
+        // Onun yerine, modele uygun sahte bir kullanıcı yaratıp
+        // 'currentUser' değişkenine manuel olarak atıyoruz.
+        userVM.currentUser = User(
+            id: "previewUser123", // Yeni modelimize uygun sahte bir 'id'
+            fullName: "Osman Baş", // Yeni modelimize uygun 'fullName'
+            username: "Osman",
+            email: "osman@example.com",
+            profilePictureUrl: "person.circle.fill" // İsim 'profilePictureUrl' olarak değişmişti
+        )
+        userVM.isLoggedIn = true // Giriş yapmış gibi davran
+        
+
+        // --- 2. Sahte TaskViewModel Hazırla ---
         let taskVM = TaskViewModel()
         
+        // Düzeltme: TaskItem modelimiz 'id: String?' olarak değiştiği için
+        // önizleme verisine de sahte 'id'ler ekleyelim.
         taskVM.tasks = [
             TaskItem(
+                id: "task1", // <-- YENİ
                 title: "SwiftUI ödevi yap",
                 description: "Ders için SwiftUI ödevini tamamla ve projeyi GitHub'a yükle.",
                 isCompleted: false,
@@ -271,6 +289,7 @@ struct DashboardView_Previews: PreviewProvider {
                 priority: .high
             ),
             TaskItem(
+                id: "task2", // <-- YENİ
                 title: "TrackMate tasarımını güncelle",
                 description: "Görev kartlarını ve renkleri güncelle, yeni animasyonları ekle.",
                 isCompleted: false,
@@ -278,6 +297,7 @@ struct DashboardView_Previews: PreviewProvider {
                 priority: .medium
             ),
             TaskItem(
+                id: "task3", // <-- YENİ
                 title: "Yeni görev ekle",
                 description: "Kullanıcıdan yeni görev ekleme formunu test et ve hata varsa düzelt.",
                 isCompleted: false,
@@ -286,6 +306,8 @@ struct DashboardView_Previews: PreviewProvider {
             )
         ]
         
+        
+        // --- 3. Görünümü Geri Döndür ---
         return DashboardView()
             .environmentObject(userVM)
             .environmentObject(taskVM)
