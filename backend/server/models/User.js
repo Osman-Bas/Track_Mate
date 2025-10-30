@@ -1,8 +1,13 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 const Schema = mongoose.Schema;
 
 // Kullanıcı şemasını (veritabanı yapısını) tanımlıyoruz
 const UserSchema = new Schema({
+    // iOS uygulamasında görünecek ad/soyad
+    fullName: {
+        type: String,
+        required: [true, 'Lütfen tam adınızı girin.']
+    },
     // Uygulama içinde kullanılacak @kullaniciadi
     username: {
         type: String,
@@ -42,4 +47,5 @@ const UserSchema = new Schema({
 
 // Şemayı bir model olarak dışa aktarıyoruz
 // 'User' adı, veritabanında 'users' adında bir koleksiyon oluşturacak
-module.exports = mongoose.model('User', UserSchema);
+export default mongoose.model('User', UserSchema);
+

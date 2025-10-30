@@ -1,10 +1,12 @@
-const express = require('express');
-const router = express.Router();
-// Az önce kurduğumuz paketten 'check' fonksiyonunu import ediyoruz
-const { check } = require('express-validator');
+// 'require' yerine 'import' kullanıyoruz
+import express from 'express';
+import { check } from 'express-validator';
 
-// Controller fonksiyonlarımızı import ediyoruz
-const { registerUser, loginUser } = require('../controllers/authController');
+// 'require' yerine 'import' kullanıyoruz ve '.js' uzantısını ekliyoruz
+// Bu dosyanın (authController.js) da ESM formatında olması GEREKİR
+import { registerUser, loginUser } from '../controllers/authController.js';
+
+const router = express.Router();
 
 // @route   POST /api/auth/register
 // @desc    Yeni kullanıcı kaydı (Sign Up)
@@ -43,5 +45,7 @@ router.post(
     loginUser // Doğrulama başarılıysa bu fonksiyonu çalıştır
 );
 
-module.exports = router;
+// Hatanızın çözümü bu satır:
+// 'module.exports = router;' YERİNE 'export default router;'
+export default router;
 
