@@ -10,6 +10,7 @@ import SwiftUI
 struct LoginView: View {
     @StateObject private var userVM = UserViewModel()
     @State private var username: String = ""
+    @State private var fullName: String = ""
     @State private var email: String = ""
     @State private var password: String = ""
     @State private var isRegisterMode = false
@@ -41,9 +42,17 @@ struct LoginView: View {
                     
                     // MARK: - Kayıt Modu (Sadece Kayıtta Görünür)
                     if isRegisterMode {
+                        // "Ad Soyad" alanı
+                        CustomTextField(iconName: "person.text.rectangle.fill",
+                                        placeholder: "Ad Soyad",
+                                        text: $fullName)
+                        .textContentType(.name)
+                        
+                        // "Kullanıcı Adı" alanı
                         CustomTextField(iconName: "person.fill",
                                         placeholder: "Kullanıcı Adı",
                                         text: $username)
+                        .textContentType(.username)
                     }
                     
                     // MARK: - Ortak Alanlar
@@ -61,14 +70,15 @@ struct LoginView: View {
                     // MARK: - Ana Buton
                     Button(action: {
                         if isRegisterMode {
-                            // TODO: Kayıt Ol API'si çağrılacak
-                            print("Kayıt Ol Butonu Tıklandı")
-                            // Şimdilik test için login'i çağıralım:
-                            userVM.login(username: username, email: email)
+                            // Yeni register fonksiyonunu çağır
+                            userVM.register(fullName: fullName,
+                                            username: username,
+                                            email: email,
+                                            password: password)
                         } else {
-                            // TODO: Giriş Yap API'si çağrılacak
-                            print("Giriş Yap Butonu Tıklandı")
-                            userVM.login(username: username, email: email) // email ve şifre ile olmalı, şimdilik böyle
+                            // Yeni login fonksiyonunu çağır
+                            userVM.login(email: email,
+                                         password: password)
                         }
                     }) {
                         Text(isRegisterMode ? "Kayıt Ol" : "Giriş Yap")

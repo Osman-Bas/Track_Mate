@@ -6,7 +6,7 @@
 
 import SwiftUI
 
-enum TaskPriority: String, CaseIterable, Identifiable {
+enum TaskPriority: String, CaseIterable, Identifiable, Codable {
     case low = "Düşük"
     case medium = "Orta"
     case high = "Yüksek"

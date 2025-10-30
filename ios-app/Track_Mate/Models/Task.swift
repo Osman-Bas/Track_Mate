@@ -6,11 +6,22 @@
 //
 import Foundation
 
-struct TaskItem: Identifiable {
-    var id: UUID = UUID()
+struct TaskItem: Identifiable, Codable {
+    var id: String?
     var title: String
     var description: String = ""
     var isCompleted: Bool
     var date: Date
     var priority: TaskPriority = .medium
+    
+    // JSON'daki isimleri Swift'teki isimlerle eşleştirir
+    enum CodingKeys: String, CodingKey {
+        case id = "_id" // JSON'daki "_id"yi, struct'ımızdaki "id"ye ata
+        case title
+        case description
+        case isCompleted
+        case date
+        case priority
+    }
+
 }
