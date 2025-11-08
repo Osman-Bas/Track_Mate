@@ -10,8 +10,26 @@ internal import Combine
 
 
 class UserViewModel: ObservableObject {
+    // --- YENİ BAŞLATICI FONKSİYON ---
+        init() {
+            print("UserViewModel başlatıldı (init).")
+            
+            // 1. Kasayı (Keychain) kontrol et
+            if let token = KeychainService.readToken() {
+                // 2. Eğer bir token varsa, 'getMe' fonksiyonunu
+                //    otomatik olarak çağırmayı dene.
+                //    (authToken'u geçici olarak set etmemiz gerekmez,
+                //     çünkü getMe() zaten kasadan okuyor)
+                print("Token bulundu. Kullanıcı bilgisi 'getMe' ile çekiliyor...")
+                getMe()
+                
+            } else {
+                // 3. Token yoksa, hiçbir şey yapma.
+                //    (Kullanıcı 'LoginView'de kalacak)
+                print("Token bulunamadı. Kullanıcı 'login' olmalı.")
+            }
+        }
     @Published var currentUser: User? = nil
-    @Published var authToken: String? = nil
     @Published var isLoggedIn: Bool = false
     // MARK: - API Adresleri
     private let apiBaseURL = "http://192.168.8.196:3000"
@@ -82,8 +100,8 @@ class UserViewModel: ObservableObject {
                         print("Başarılı Giriş! Token alındı, şimdi kullanıcı bilgisi çekilecek...")
                         
                         // ---- YENİ ADIMLAR ----
-                        // 1. Token'ı ViewModel'e kaydet
-                        self.authToken = tokenResponse.token
+                        // 1. Token'ı 'Kasa'ya (Keychain) kaydet
+                        KeychainService.save(token: tokenResponse.token)
                         
                         // 2. 'isLoggedIn = true' YAPMA.
                         //    Onun yerine, kullanıcıyı getirmesi için 'getMe()'yi çağır.
@@ -204,8 +222,8 @@ class UserViewModel: ObservableObject {
                         print("Başarılı Kayıt! Token alındı, şimdi kullanıcı bilgisi çekilecek...")
                         
                         // ---- YENİ ADIMLAR ----
-                        // 1. Token'ı ViewModel'e kaydet
-                        self.authToken = tokenResponse.token
+                        // 1. Token'ı 'Kasa'ya (Keychain) kaydet
+                        KeychainService.save(token: tokenResponse.token)
                         
                         // 2. 'isLoggedIn = true' YAPMA.
                         //    Onun yerine, kullanıcıyı getirmesi için 'getMe()'yi çağır.
@@ -236,15 +254,22 @@ class UserViewModel: ObservableObject {
     }
     
     func logout() {
+        // 1. Önce 'Kasa'daki (Keychain) token'ı sil
+        KeychainService.deleteToken()
+        
+        // 2. Sonra ViewModel'deki değişkenleri sıfırla
         self.currentUser = nil
         self.isLoggedIn = false
     }
-    //--- KULLANICI BİLGİSİNİ GETİR ---//
+    
     func getMe() {
         
-        // 1. Token (authToken) var mı? (Giriş yapılmış mı?)
-        guard let token = authToken else {
-            print("Hata: Token 'nil'. getMe() çağrılamaz.")
+        // 1. Token'ı 'Kasa'dan (Keychain) oku
+        guard let token = KeychainService.readToken() else {
+            print("Hata: Keychain'de Token 'nil'. getMe() çağrılamaz.")
+            // Bu, 'login' veya 'register'ın henüz çağrılmadığı anlamına gelir.
+            // Veya 'login'/'register'dan hemen sonra çağrılıyorsa,
+            // 'save' başarılı olmuş demektir, bu yüzden 'read' de başarılı olmalı.
             return
         }
         
@@ -321,6 +346,6 @@ class UserViewModel: ObservableObject {
             
         }.resume() // <-- İsteği resmen başlatır
     }
-   
-
+    
+    
 }
