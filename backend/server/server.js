@@ -1,30 +1,41 @@
 import express from 'express';
-import 'dotenv/config'; 
-import cors from 'cors'; 
-import connectDB from './configs/db.js'; 
+import 'dotenv/config'; // .env dosyasını yükler
+import cors from 'cors';
+import connectDB from './configs/db.js';
 
-
+// --- ROTA DOSYALARINI IMPORT ET ---
 import authRoutes from './routes/authRoutes.js';
+// YENİ EKLENEN SATIR (Adım 4.1)
+import taskRoutes from './routes/taskRoutes.js'; // Task rotalarını import et
 
+// Veritabanına bağlan
+connectDB();
 
 const app = express();
 
-await connectDB();
+// Middleware (ara yazılımlar)
+app.use(cors()); // Herkese açık API için
+app.use(express.json()); // JSON body'lerini okuyabilmek için
 
-app.use(cors());
+// --- ROTALARI KULLAN ---
 
-app.use(express.json());
+// Ana (Test) Rota
+app.get('/', (req, res) => res.send("API is working..."));
 
-app.get('/', (req, res) => res.send('API is working...'));
+// 1. Auth Rotaları
+// (Tüm /api/auth/... istekleri authRoutes'a gider)
 app.use('/api/auth', authRoutes);
 
+// 2. Task Rotaları (YENİ EKLENEN SATIR - Adım 4.2)
+// (Tüm /api/tasks/... istekleri taskRoutes'a gider)
+app.use('/api/tasks', taskRoutes);
 
+
+// Port'u .env'den al, bulamazsan 3000'i kullan
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-    
     console.log(`Server is running on port ${PORT}`);
 });
-
 
 export default app;
