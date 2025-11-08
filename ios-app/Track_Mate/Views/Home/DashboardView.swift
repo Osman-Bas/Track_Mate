@@ -46,8 +46,8 @@ struct DashboardView: View {
                     .animation(.spring(), value: showSuccessBanner)
                     .zIndex(1)
                     .onAppear {
-                            AudioServicesPlaySystemSound(1022)
-                        }
+                        AudioServicesPlaySystemSound(1022)
+                    }
                 }
                 VStack(alignment: .leading, spacing: 20) {
                     
@@ -120,7 +120,8 @@ struct DashboardView: View {
                                             }
                                             
                                             Button(role: .destructive) {
-                                                // Şimdilik silme işlemi yapılmıyor (backend sonrası eklenecek)
+                                                // ViewModel'deki yeni silme fonksiyonunu çağır
+                                                taskVM.deleteTask(task: task)
                                             } label: {
                                                 Label("Görevi Sil", systemImage: "trash")
                                             }
@@ -167,6 +168,10 @@ struct DashboardView: View {
                     }
                 }
             }
+        }
+        .onAppear { // <-- BU BLOĞU EKLE
+            print("DashboardView göründü, görevler çekiliyor...")
+            taskVM.fetchTasks()
         }
     }
     
@@ -297,7 +302,7 @@ struct DashboardView_Previews: PreviewProvider {
         )
         userVM.isLoggedIn = true // Giriş yapmış gibi davran
         
-
+        
         // --- 2. Sahte TaskViewModel Hazırla ---
         let taskVM = TaskViewModel()
         

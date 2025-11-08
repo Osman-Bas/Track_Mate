@@ -134,14 +134,14 @@ struct AddTaskView: View {
                     }
                     
                     Button(action: {
-                        let newTask = TaskItem(
-                            title: title,
-                            description: description,
-                            isCompleted: false,
-                            date: time,
-                            priority: priority
-                        )
-                        taskVM.tasks.append(newTask)
+                        // ViewModel'deki yeni fonksiyonu çağır
+                                                taskVM.addTask(title: title,
+                                                             description: description,
+                                                             date: time,
+                                                             priority: priority)
+                                                
+                                                onSave?() // Banner'ı göster
+                                                dismiss() // Ekranı kapat
                         
                         // 🎯 Banner callback
                         onSave?()
