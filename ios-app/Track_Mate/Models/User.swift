@@ -11,10 +11,11 @@ struct User: Codable {
     var fullName: String
     var username: String
     var email: String
-    var profilePictureUrl: String? // system image adı veya url olabilir
+    var profilePictureUrl: String?
+    
     
     enum CodingKeys: String, CodingKey {
-        case id = "_id" // JSON'daki "_id"yi, struct'ımızdaki "id"ye ata
+        case id = "_id"
         case fullName
         case username
         case email

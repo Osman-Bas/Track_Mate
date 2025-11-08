@@ -54,13 +54,37 @@ struct DashboardView: View {
                     // MARK: - Profil ve Karşılama
                     if let user = userVM.currentUser {
                         HStack(alignment: .center, spacing: 15) {
-                            Image(systemName: user.profilePictureUrl ?? "person.circle")
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 60, height: 60)
-                                .clipShape(Circle())
-                                .shadow(radius: 4)
-                            
+                            if let user = userVM.currentUser {
+                                HStack(alignment: .center, spacing: 15) {
+                                    if let urlString = user.profilePictureUrl,
+                                       !urlString.isEmpty,
+                                       let url = URL(string: urlString) {
+                                        
+                                        // 2. URL VARSA: İnternetten indirmek için AsyncImage kullan
+                                        AsyncImage(url: url) { image in
+                                            // Resim yüklendiğinde
+                                            image
+                                                .resizable()
+                                                .scaledToFill()
+                                        } placeholder: {
+                                            // Resim yüklenirken
+                                            ProgressView() // Dönen bir yükleme ikonu göster
+                                        }
+                                        .frame(width: 60, height: 60)
+                                        .clipShape(Circle())
+                                        .shadow(radius: 4)
+                                        
+                                    } else {
+                                        // 3. URL YOKSA: Varsayılan (default) ikonu kullan
+                                        Image(systemName: "person.circle.fill")
+                                            .resizable()
+                                            .scaledToFill()
+                                            .frame(width: 60, height: 60)
+                                            .clipShape(Circle())
+                                            .shadow(radius: 4)
+                                    }
+                                }
+                            }
                             Text("Merhaba, \(user.username)")
                                 .font(.title2.bold())
                         }
