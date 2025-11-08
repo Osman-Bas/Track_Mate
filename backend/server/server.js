@@ -23,11 +23,8 @@ app.use(express.json()); // JSON body'lerini okuyabilmek için
 app.get('/', (req, res) => res.send("API is working..."));
 
 // 1. Auth Rotaları
-// (Tüm /api/auth/... istekleri authRoutes'a gider)
-app.use('/api/auth', authRoutes);
 
-// 2. Task Rotaları (YENİ EKLENEN SATIR - Adım 4.2)
-// (Tüm /api/tasks/... istekleri taskRoutes'a gider)
+app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 
 
