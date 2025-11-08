@@ -1,51 +1,50 @@
-// 'require' yerine 'import' kullanıyoruz
 import express from 'express';
-import { check } from 'express-validator';
+import { check } from 'express-validator'; // Veri doğrulama
 
-// 'require' yerine 'import' kullanıyoruz ve '.js' uzantısını ekliyoruz
-// Bu dosyanın (authController.js) da ESM formatında olması GEREKİR
-import { registerUser, loginUser } from '../controllers/authController.js';
+// --- GÜNCELLEME (Adım 1) ---
+// Controller'dan 'getMe' fonksiyonunu ve middleware'den 'bekçi'yi import et
+import { registerUser, loginUser, getMe } from '../controllers/authController.js';
+import authMiddleware from '../middleware/authMiddleware.js'; // "Bekçi"mizi import ediyoruz
 
 const router = express.Router();
 
 // @route   POST /api/auth/register
-// @desc    Yeni kullanıcı kaydı (Sign Up)
+// @desc    Yeni kullanıcı kaydı (Halka açık)
 // @access  Public
 router.post(
     '/register',
     [
-        // Gelen veriyi (req.body) kontrol et
-        check('fullName', 'İsim alanı boş bırakılamaz.')
-            .not()
-            .isEmpty(),
-        check('username', 'Kullanıcı adı boş bırakılamaz.')
-            .not()
-            .isEmpty(),
-        check('email', 'Lütfen geçerli bir e-posta adresi girin.')
-            .isEmail(),
-        check('password', 'Şifreniz en az 6 karakter olmalıdır.')
-            .isLength({ min: 6 })
+        // Doğrulama kuralları...
+        check('fullName', 'İsim alanı boş bırakılamaz.').not().isEmpty(),
+        check('username', 'Kullanıcı adı boş bırakılamaz.').not().isEmpty(),
+        check('email', 'Lütfen geçerli bir e-posta adresi girin.').isEmail(),
+        check('password', 'Şifreniz en az 6 karakter olmalıdır.').isLength({ min: 6 })
     ],
-    registerUser // Doğrulama başarılıysa bu fonksiyonu çalıştır
+    registerUser
 );
 
 // @route   POST /api/auth/login
-// @desc    Kullanıcı girişi (Sign In)
+// @desc    Kullanıcı girişi (Halka açık)
 // @access  Public
 router.post(
     '/login',
     [
-        // Giriş için e-posta ve şifreyi kontrol et
-        check('email', 'Lütfen geçerli bir e-posta adresi girin.')
-            .isEmail(),
-        check('password', 'Şifre alanı boş bırakılamaz.')
-            .not()
-            .isEmpty()
+        // Doğrulama kuralları...
+        check('email', 'Lütfen geçerli bir e-posta adresi girin.').isEmail(),
+        check('password', 'Şifre alanı boş bırakılamaz.').not().isEmpty()
     ],
-    loginUser // Doğrulama başarılıysa bu fonksiyonu çalıştır
+    loginUser
 );
 
-// Hatanızın çözümü bu satır:
-// 'module.exports = router;' YERİNE 'export default router;'
-export default router;
+// --- YENİ EKLENEN ROTA (Adım 2) ---
+// @route   GET /api/auth/me
+// @desc    Giriş yapan kullanıcının bilgilerini al (Korumalı)
+// @access  Private
+router.get(
+    '/me',
+    authMiddleware, // 1. "Bekçi"yi bu rotanın önüne koyuyoruz.
+    getMe             // 2. Bekçi izin verirse, 'getMe' fonksiyonu çalışır.
+);
 
+// ESM formatında dışa aktar
+export default router;
