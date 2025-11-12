@@ -11,28 +11,29 @@ internal import Combine
 
 class UserViewModel: ObservableObject {
     // --- YENİ BAŞLATICI FONKSİYON ---
-        init() {
-            print("UserViewModel başlatıldı (init).")
+    init() {
+        print("UserViewModel başlatıldı (init).")
+        
+        // 1. Kasayı (Keychain) kontrol et
+        if let token = KeychainService.readToken() {
+            // 2. Eğer bir token varsa, 'getMe' fonksiyonunu
+            //    otomatik olarak çağırmayı dene.
+            //    (authToken'u geçici olarak set etmemiz gerekmez,
+            //     çünkü getMe() zaten kasadan okuyor)
+            print("Token bulundu. Kullanıcı bilgisi 'getMe' ile çekiliyor...")
+            getMe()
             
-            // 1. Kasayı (Keychain) kontrol et
-            if let token = KeychainService.readToken() {
-                // 2. Eğer bir token varsa, 'getMe' fonksiyonunu
-                //    otomatik olarak çağırmayı dene.
-                //    (authToken'u geçici olarak set etmemiz gerekmez,
-                //     çünkü getMe() zaten kasadan okuyor)
-                print("Token bulundu. Kullanıcı bilgisi 'getMe' ile çekiliyor...")
-                getMe()
-                
-            } else {
-                // 3. Token yoksa, hiçbir şey yapma.
-                //    (Kullanıcı 'LoginView'de kalacak)
-                print("Token bulunamadı. Kullanıcı 'login' olmalı.")
-            }
+        } else {
+            // 3. Token yoksa, hiçbir şey yapma.
+            //    (Kullanıcı 'LoginView'de kalacak)
+            print("Token bulunamadı. Kullanıcı 'login' olmalı.")
         }
+    }
     @Published var currentUser: User? = nil
     @Published var isLoggedIn: Bool = false
+    @Published var errorMessage: String? = nil
     // MARK: - API Adresleri
-    private let apiBaseURL = "http://192.168.8.196:3000"
+    private let apiBaseURL = "http://192.168.8.164:3000"
     
     // GİRİŞ YAP FONKSİYONU (Ağ isteği eklendi)
     func login(email: String, password: String) {
@@ -73,6 +74,9 @@ class UserViewModel: ObservableObject {
             if let error = error {
                 print("Ağ Hatası: \(error.localizedDescription)")
                 // TODO: Kullanıcıya "İnternet bağlantınızı kontrol edin" hatası göster
+                DispatchQueue.main.async {
+                    self.errorMessage = "Ağ Hatası: Lütfen internet bağlantınızı kontrol edin."
+                }
                 return
             }
             
@@ -117,14 +121,16 @@ class UserViewModel: ObservableObject {
                         let errorResponse = try JSONDecoder().decode(ErrorResponse.self, from: data)
                         print("Giriş Hatası: \(errorResponse.msg)")
                         
-                        // TODO: Kullanıcıya bu 'errorResponse.msg'i bir Alert ile göster
+                        self.errorMessage = errorResponse.msg // "Geçersiz e-posta veya şifre."
                         
                     } else {
                         // Diğer (500 vb.) sunucu hataları
                         print("Sunucu Hatası. Kod: \(httpResponse.statusCode)")
+                        self.errorMessage = "Sunucu Hatası (\(httpResponse.statusCode)). Lütfen daha sonra tekrar deneyin."
                     }
                 } catch {
                     print("JSON Decode Hatası: \(error)")
+                    self.errorMessage = "Gelen veride bir sorun oluştu."
                 }
             }
             
@@ -191,7 +197,9 @@ class UserViewModel: ObservableObject {
             // A. Önce bir ağ hatası (internet yok vb.) oldu mu?
             if let error = error {
                 print("Ağ Hatası: \(error.localizedDescription)")
-                // TODO: Kullanıcıya "İnternet bağlantınızı kontrol edin" hatası göster
+                DispatchQueue.main.async {
+                    self.errorMessage = "Ağ Hatası: Lütfen internet bağlantınızı kontrol edin."
+                }
                 return
             }
             
@@ -239,11 +247,13 @@ class UserViewModel: ObservableObject {
                         let errorResponse = try JSONDecoder().decode(ErrorResponse.self, from: data)
                         print("Kayıt Hatası: \(errorResponse.msg)")
                         
-                        // TODO: Kullanıcıya bu 'errorResponse.msg'i bir Alert ile göster
+                        self.errorMessage = errorResponse.msg // "Bu e-posta adresi zaten kullanılıyor."
+                        
                         
                     } else {
                         // Diğer (500 vb.) sunucu hataları
                         print("Sunucu Hatası. Kod: \(httpResponse.statusCode)")
+                        self.errorMessage = "Sunucu Hatası (\(httpResponse.statusCode)). Lütfen daha sonra tekrar deneyin."
                     }
                 } catch {
                     print("JSON Decode Hatası: \(error)")

@@ -110,6 +110,16 @@ struct LoginView: View {
                 }
                 .padding(.horizontal) // VStack'e kenar boşluğu
                 .padding(.top, 30) // Üstten boşluk
+                
+                .alert("Bir Sorun Oluştu", isPresented: .constant(userVM.errorMessage != nil), actions: {
+                    // Sadece "Tamam" butonu
+                    Button("Tamam") {
+                        userVM.errorMessage = nil // Alert'i kapatmak için hatayı sıfırla
+                    }
+                }, message: {
+                    // Hata mesajı (örn: "E-posta zaten kullanılıyor")
+                    Text(userVM.errorMessage ?? "Bilinmeyen bir hata oluştu.")
+                })
             }
             .navigationDestination(isPresented: $userVM.isLoggedIn) {
                 HomeView()

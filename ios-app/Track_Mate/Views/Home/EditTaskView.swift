@@ -114,11 +114,13 @@ struct EditTaskView: View {
                     .cornerRadius(15)
                     
                     Button("Kaydet") {
-                        if let index = taskVM.tasks.firstIndex(where: { $0.id == task.id }) {
-                            taskVM.tasks[index] = task
-                        }
-                        // 🎯 Banner tetikleme
+                        // 1. ViewModel'deki yeni 'updateTask' fonksiyonunu çağır
+                        taskVM.updateTask(task: task)
+                        
+                        // 2. Banner'ı tetikle
                         onSave?()
+                        
+                        // 3. Ekranı kapat
                         dismiss()
                     }
                     .fontWeight(.bold)

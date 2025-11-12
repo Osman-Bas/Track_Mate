@@ -96,7 +96,16 @@ struct DashboardView: View {
                         .padding(.horizontal)
                     
                     // MARK: - Görev Listesi
-                    if taskVM.tasks.isEmpty {
+                    if taskVM.isLoading {
+                        // 1. Durum: Yükleniyor
+                        // Görevler çekilirken dönen bir çember göster
+                        Spacer() // Boşluğu doldurmak için
+                        ProgressView() // Dönen yükleme çemberi
+                        Spacer()
+                        
+                    } else if taskVM.tasks.isEmpty {
+                        // 2. Durum: Yükleme bitti VE görev yok
+                        Spacer()
                         VStack(spacing: 15) {
                             Image(systemName: "checkmark.seal")
                                 .font(.system(size: 50))
@@ -106,7 +115,10 @@ struct DashboardView: View {
                                 .foregroundColor(.secondary)
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        Spacer()
+                        
                     } else {
+                        // 3. Durum: Yükleme bitti VE görevler var
                         ScrollView {
                             VStack(spacing: 15) {
                                 ForEach(taskVM.tasks) { task in
@@ -120,7 +132,6 @@ struct DashboardView: View {
                                             }
                                             
                                             Button(role: .destructive) {
-                                                // ViewModel'deki yeni silme fonksiyonunu çağır
                                                 taskVM.deleteTask(task: task)
                                             } label: {
                                                 Label("Görevi Sil", systemImage: "trash")
@@ -131,12 +142,7 @@ struct DashboardView: View {
                                         }
                                 }
                                 .sheet(isPresented: $showEditTask) {
-                                    if let task = selectedTask {
-                                        EditTaskView(task: task, onSave: {
-                                            showBanner(message: "Görev güncellendi ✏️")
-                                        })
-                                        .environmentObject(taskVM)
-                                    }
+                                    // ... (EditTaskView kodunuz) ...
                                 }
                             }
                             .padding(.horizontal)
