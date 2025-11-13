@@ -135,3 +135,36 @@ export const getMe = async (req, res) => {
         res.status(500).send('Sunucu Hatası');
     }
 };
+
+export const updateMood = async (req, res) => {
+    // 1. Rota'dan (authRoutes.js) gelen doğrulama sonucunu kontrol et
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ msg: errors.array()[0].msg });
+    }
+
+    try {
+        // 2. iOS'tan gelen yeni 'mood' değerini al
+        const { mood } = req.body;
+
+        // 3. Kullanıcıyı, 'authMiddleware' sayesinde 'req.user.id'den bul
+        //    ve 'currentMood' alanını güncelle.
+        //    { new: true } -> güncellenmiş (yeni) kullanıcı verisini döndürür.
+        const user = await User.findByIdAndUpdate(
+            req.user.id,
+            { currentMood: mood },
+            { new: true, runValidators: true } // 'runValidators' enum kontrolünü tetikler
+        ).select('currentMood'); // Sadece güncellenen alanı geri döndür
+
+        if (!user) {
+            return res.status(404).json({ msg: 'Kullanıcı bulunamadı.' });
+        }
+
+        // 4. Planda belirtildiği gibi başarı cevabını döndür.
+        res.json({ success: true, newMood: user.currentMood });
+
+    } catch (err) {
+        console.error('updateMood Hatası:', err.message);
+        res.status(500).send('Sunucu Hatası');
+    }
+};

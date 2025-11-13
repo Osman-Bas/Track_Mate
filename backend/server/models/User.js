@@ -42,8 +42,17 @@ const UserSchema = new Schema({
     registerDate: {
         type: Date,
         default: Date.now // Kayıt anındaki tarihi otomatik ata
+    },
+    currentMood: {
+        type: String,
+        // Planda belirttiğin 5'li skala
+        enum: ['berbat', 'uzgun', 'normal', 'mutlu', 'harika'],
+        default: 'normal'
     }
+}, {
+    timestamps: true // createdAt ve updatedAt alanlarını ekler
 });
+    
 
 // Şemayı bir model olarak dışa aktarıyoruz
 // 'User' adı, veritabanında 'users' adında bir koleksiyon oluşturacak

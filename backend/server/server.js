@@ -5,9 +5,8 @@ import connectDB from './configs/db.js';
 
 // --- ROTA DOSYALARINI IMPORT ET ---
 import authRoutes from './routes/authRoutes.js';
-// YENİ EKLENEN SATIR (Adım 4.1)
-import taskRoutes from './routes/taskRoutes.js'; // Task rotalarını import et
-
+import taskRoutes from './routes/taskRoutes.js'; 
+import journalRoutes from './routes/journalRoutes.js';
 // Veritabanına bağlan
 connectDB();
 
@@ -26,6 +25,7 @@ app.get('/', (req, res) => res.send("API is working..."));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
+app.use('/api/journal', journalRoutes);
 
 
 // Port'u .env'den al, bulamazsan 3000'i kullan
