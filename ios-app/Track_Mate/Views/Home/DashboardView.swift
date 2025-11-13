@@ -13,7 +13,7 @@ struct DashboardView: View {
     @EnvironmentObject var taskVM: TaskViewModel
     @State private var showAddTask = false
     @State private var selectedTask: TaskItem? = nil
-    @State private var showEditTask = false
+//    @State private var showEditTask = false
     @State private var showSuccessBanner = false
     @State private var successMessage = ""
     
@@ -126,7 +126,7 @@ struct DashboardView: View {
                                         .contextMenu {
                                             Button {
                                                 selectedTask = task
-                                                showEditTask = true
+//                                                showEditTask = true
                                             } label: {
                                                 Label("Görevi Düzenle", systemImage: "pencil")
                                             }
@@ -141,13 +141,23 @@ struct DashboardView: View {
                                             taskVM.toggleTaskCompletion(task: task)
                                         }
                                 }
-                                .sheet(isPresented: $showEditTask) {
-                                    // ... (EditTaskView kodunuz) ...
-                                }
+                                
                             }
                             .padding(.horizontal)
                         }
+                        .sheet(item: $selectedTask) { task in
+                                                // 'item' kullandığımız için 'if let'e gerek yok.
+                                                // 'task' zaten dolu olarak gelir.
+                                                EditTaskView(task: task, onSave: {
+                                                    showBanner(message: "Görev güncellendi ✏️")
+                                                })
+                                                .environmentObject(taskVM)
+                                            }
+                        
+                        
+                        
                     }
+                    
                 }
                 
                 // MARK: - Floating "+" Butonu

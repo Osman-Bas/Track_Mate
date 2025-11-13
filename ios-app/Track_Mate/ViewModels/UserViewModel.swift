@@ -15,7 +15,7 @@ class UserViewModel: ObservableObject {
         print("UserViewModel başlatıldı (init).")
         
         // 1. Kasayı (Keychain) kontrol et
-        if let token = KeychainService.readToken() {
+        if KeychainService.readToken() != nil{
             // 2. Eğer bir token varsa, 'getMe' fonksiyonunu
             //    otomatik olarak çağırmayı dene.
             //    (authToken'u geçici olarak set etmemiz gerekmez,

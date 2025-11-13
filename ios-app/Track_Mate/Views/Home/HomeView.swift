@@ -20,15 +20,21 @@ struct HomeView: View {
                     Label("Ana Menü", systemImage: "house.fill")
                 }
             
-            AIView()
+            JournalEntryView() // <-- DEĞİŞTİ
                 .tabItem {
-                    Label("AI Öneri", systemImage: "brain.head.profile")
+                    Label("Günlük", systemImage: "book.closed.fill") // <-- DEĞİŞTİ
                 }
             
             StatsView()
                 .tabItem {
                     Label("İstatistikler", systemImage: "chart.bar.fill")
                 }
+            
+            AIView()
+                .tabItem {
+                    Label("AI Öneri", systemImage: "brain.head.profile")
+                }
+            
             
             SettingsView()
                 .tabItem {
