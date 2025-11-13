@@ -2,6 +2,7 @@ import express from 'express';
 import 'dotenv/config'; // .env dosyasını yükler
 import cors from 'cors';
 import connectDB from './configs/db.js';
+import statsRoutes from './routes/statsRoutes.js';
 
 // --- ROTA DOSYALARINI IMPORT ET ---
 import authRoutes from './routes/authRoutes.js';
@@ -26,6 +27,7 @@ app.get('/', (req, res) => res.send("API is working..."));
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/journal', journalRoutes);
+app.use('/api/stats', statsRoutes);
 
 
 // Port'u .env'den al, bulamazsan 3000'i kullan
