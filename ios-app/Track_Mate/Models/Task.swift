@@ -6,7 +6,7 @@
 //
 import Foundation
 
-struct TaskItem: Identifiable, Codable {
+struct TaskItem: Identifiable, Codable, Equatable{
     var id: String?
     var title: String
     var description: String = ""
