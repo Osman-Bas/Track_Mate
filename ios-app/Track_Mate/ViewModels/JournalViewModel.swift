@@ -38,7 +38,7 @@ class JournalViewModel: ObservableObject {
     
     // Bu, "Yeni Giriş" sekmesindeki 5'li ruh hali seçimine bağlanacak
     @Published var selectedMood: String = "normal" // Varsayılan değer
-    
+    @Published var isHistoryLoading: Bool = false
     // MARK: - 1. Anlık Ruh Halini Güncelle (AI İçin)
     // PATCH /api/auth/mood
     func updateCurrentMood(mood: String) {
@@ -117,35 +117,48 @@ class JournalViewModel: ObservableObject {
     }
     
     // MARK: - 3. Geçmiş Günlükleri Getir (Geçmiş Sekmesi İçin)
-    // GET /api/journal
-    func fetchJournalEntries() {
-        print("Geçmiş günlükler çekiliyor...")
-        guard let token = KeychainService.readToken() else { return }
-        
-        let urlString = journalApiURL
-        guard let url = URL(string: urlString) else { return }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            guard let data = data else {
-                print("Geçmiş Günlükler: Veri gelmedi")
-                return
+        // GET /api/journal
+        func fetchJournalEntries() {
+            print("Geçmiş günlükler çekiliyor...")
+            guard let token = KeychainService.readToken() else { return }
+            
+            let urlString = journalApiURL
+            guard let url = URL(string: urlString) else { return }
+            
+            // ---- YENİ ADIM 1: YÜKLEMEYİ BAŞLAT ----
+            DispatchQueue.main.async {
+                self.isHistoryLoading = true
             }
             
-            do {
-                // Sude'nin [{_id: "...", ...}] dizisini çöz
-                let entries = try JSONDecoder().decode([JournalEntry].self, from: data)
+            var request = URLRequest(url: url)
+            request.httpMethod = "GET"
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            
+            URLSession.shared.dataTask(with: request) { data, response, error in
                 
-                DispatchQueue.main.async {
-                    self.pastEntries = entries
-                    print("Geçmiş \(entries.count) günlük kaydı başarıyla çekildi.")
+                // ---- YENİ ADIM 2: YÜKLEMEYİ BİTİR ----
+                // (Başarılı da olsa, hata da alsa çalışır)
+                defer {
+                    DispatchQueue.main.async {
+                        self.isHistoryLoading = false
+                    }
                 }
-            } catch {
-                print("Geçmiş Günlükler Decode Hatası: \(error)")
-            }
-        }.resume()
-    }
+                
+                guard let data = data else {
+                    print("Geçmiş Günlükler: Veri gelmedi")
+                    return
+                }
+                
+                do {
+                    let entries = try JSONDecoder().decode([JournalEntry].self, from: data)
+                    
+                    DispatchQueue.main.async {
+                        self.pastEntries = entries
+                        print("Geçmiş \(entries.count) günlük kaydı başarıyla çekildi.")
+                    }
+                } catch {
+                    print("Geçmiş Günlükler Decode Hatası: \(error)")
+                }
+            }.resume()
+        }
 }
