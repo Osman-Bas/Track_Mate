@@ -35,21 +35,23 @@ struct AddTaskView: View {
     
     var body: some View {
         ZStack {
-            Color.black.opacity(0.4)
+            Color("pembe")
+                .opacity(0.4)
+                
                 .ignoresSafeArea()
             
             VStack(spacing: 20) {
                 
                 Capsule()
-                    .fill(Color.black.opacity(0.6))
+                    .fill(Color.white.opacity(0.6))
                     .frame(width: 120, height: 5)
-                    .shadow(color: Color.white, radius: 4, x: 0, y: 2)
+                    .shadow(color: Color.black.opacity(0.4), radius: 4, x: 0, y: 2)
                     .padding(.top, 12)
                     .padding(.bottom, 4)
                 
                 Text("Yeni Görev")
                     .font(.title.bold())
-                    .foregroundColor(.black)
+                    .foregroundColor(.black.opacity(0.6))
                     .padding(.top,60)
                     .padding(.bottom,10)
                 
@@ -76,15 +78,12 @@ struct AddTaskView: View {
                         .cornerRadius(12)
                     
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Öncelik")
-                            .foregroundColor(.black.opacity(0.7))
-                            .font(.headline)
-                        
+                    
                         HStack(spacing: 10) {
                             ForEach(TaskPriority.allCases) { pr in
                                 Text(pr.rawValue)
                                     .fontWeight(priority == pr ? .bold : .regular)
-                                    .foregroundColor(priority == pr ? .black : .black.opacity(0.7))
+                                    .foregroundColor(priority == pr ? .white : .black.opacity(0.7))
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 12)
                                     .background(
@@ -112,7 +111,7 @@ struct AddTaskView: View {
                             }
                         }
                     }
-                    .padding(.top, 5)
+                    .padding(.top, 20)
                 }
                 .padding()
                 .background(Color.white.opacity(0.05))
@@ -128,8 +127,8 @@ struct AddTaskView: View {
                             .fontWeight(.bold)
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color.red.opacity(0.9))
-                            .foregroundColor(.black)
+                            .background(Color("pembe"))
+                            .foregroundColor(.white)
                             .cornerRadius(15)
                     }
                     
@@ -152,8 +151,8 @@ struct AddTaskView: View {
                             .fontWeight(.bold)
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(title.trimmingCharacters(in: .whitespaces).isEmpty ? Color.gray.opacity(0.6) : Color.green)
-                            .foregroundColor(.black)
+                            .background(title.trimmingCharacters(in: .whitespaces).isEmpty ? Color("yesil") : Color("koyuyesil").opacity(0.8))
+                            .foregroundColor(.white)
                             .cornerRadius(15)
                     }
                     .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)

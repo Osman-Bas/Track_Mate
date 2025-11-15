@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct LoginView: View {
-    @StateObject private var userVM = UserViewModel()
+    @EnvironmentObject var userVM: UserViewModel
     @State private var username: String = ""
     @State private var fullName: String = ""
     @State private var email: String = ""
@@ -16,116 +16,117 @@ struct LoginView: View {
     @State private var isRegisterMode = false
     
     var body: some View {
-        NavigationStack {
-            
-            ZStack {
-                // MARK: - Arka Plan Rengi
-                Color(.systemGroupedBackground) // <-- YENİ (Dashboard ile aynı)
-                    .ignoresSafeArea()
-                VStack(spacing: 15) {
-                    // MARK: - Logo/İkon
-                    Image(systemName: "list.clipboard.fill") // <-- YENİ İKON
-                        .font(.system(size: 80, weight: .bold))
-                        .foregroundStyle( // <-- YENİ STİL
-                            LinearGradient(
-                                colors: [Color.blue, Color.cyan],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+        ZStack {
+            // MARK: - Arka Plan Rengi
+            LinearGradient(
+                            gradient: Gradient(colors: [
+                                Color.blue.opacity(0.2), // Üstte açık mavi
+                                Color(.systemGroupedBackground) // Alta doğru griye dönüş
+                            ]),
+                            startPoint: .top, // Geçiş üstte başlasın
+                            endPoint: .bottom // Altta bitsin
+                        ) // <-- YENİ (Dashboard ile aynı)
+                .ignoresSafeArea()
+            VStack(spacing: 15) {
+                // MARK: - Logo/İkon
+                Image(systemName: "list.clipboard.fill") // <-- YENİ İKON
+                    .font(.system(size: 80, weight: .bold))
+                    .foregroundStyle( // <-- YENİ STİL
+                        LinearGradient(
+                            colors: [Color.blue, Color.cyan],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
                         )
-                        .padding(.bottom, 10) // İkon ile başlık arasına boşluk
-                    
-                    // MARK: - Başlık
-                    Text(isRegisterMode ? "Hesap Oluştur" : "Giriş Yap")
-                        .font(.largeTitle.bold())
-                        .padding(.bottom, 20)
-                    
-                    // MARK: - Kayıt Modu (Sadece Kayıtta Görünür)
-                    if isRegisterMode {
-                        // "Ad Soyad" alanı
-                        CustomTextField(iconName: "person.text.rectangle.fill",
-                                        placeholder: "Ad Soyad",
-                                        text: $fullName)
-                        .textContentType(.name)
-                        
-                        // "Kullanıcı Adı" alanı
-                        CustomTextField(iconName: "person.fill",
-                                        placeholder: "Kullanıcı Adı",
-                                        text: $username)
-                        .textContentType(.username)
-                    }
-                    
-                    // MARK: - Ortak Alanlar
-                    CustomTextField(iconName: "envelope.fill",
-                                    placeholder: "E-posta",
-                                    text: $email)
-                    .keyboardType(.emailAddress)
-                    .textContentType(.emailAddress)
-                    
-                    CustomTextField(iconName: "lock.fill",
-                                    placeholder: "Şifre",
-                                    text: $password,
-                                    isSecure: true) // <-- Burası önemli
-                    .textContentType(isRegisterMode ? .newPassword : .password)
-                    // MARK: - Ana Buton
-                    Button(action: {
-                        if isRegisterMode {
-                            // Yeni register fonksiyonunu çağır
-                            userVM.register(fullName: fullName,
-                                            username: username,
-                                            email: email,
-                                            password: password)
-                        } else {
-                            // Yeni login fonksiyonunu çağır
-                            userVM.login(email: email,
-                                         password: password)
-                        }
-                    }) {
-                        Text(isRegisterMode ? "Kayıt Ol" : "Giriş Yap")
-                            .font(.headline.bold())
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                    }
-                    .padding(.top, 10)
-                    
-                    Spacer() // Butonları yukarı iter
-                    
-                    // MARK: - Mod Değiştirme Butonu
-                    Button(action: {
-                        withAnimation(.easeInOut) {
-                            isRegisterMode.toggle() // Modu değiştir
-                        }
-                    }) {
-                        HStack {
-                            Text(isRegisterMode ? "Zaten bir hesabın var mı?" : "Hesabın yok mu?")
-                            Text(isRegisterMode ? "Giriş Yap" : "Kayıt Ol")
-                                .bold()
-                        }
-                        .font(.subheadline)
-                    }
-                    
-                }
-                .padding(.horizontal) // VStack'e kenar boşluğu
-                .padding(.top, 30) // Üstten boşluk
+                    )
+                    .padding(.bottom, 10) // İkon ile başlık arasına boşluk
                 
-                .alert("Bir Sorun Oluştu", isPresented: .constant(userVM.errorMessage != nil), actions: {
-                    // Sadece "Tamam" butonu
-                    Button("Tamam") {
-                        userVM.errorMessage = nil // Alert'i kapatmak için hatayı sıfırla
+                // MARK: - Başlık
+                Text(isRegisterMode ? "Hesap Oluştur" : "Giriş Yap")
+                    .font(.largeTitle.bold())
+                    .padding(.bottom, 20)
+                
+                // MARK: - Kayıt Modu (Sadece Kayıtta Görünür)
+                if isRegisterMode {
+                    // "Ad Soyad" alanı
+                    CustomTextField(iconName: "person.text.rectangle.fill",
+                                    placeholder: "Ad Soyad",
+                                    text: $fullName)
+                    .textContentType(.name)
+                    
+                    // "Kullanıcı Adı" alanı
+                    CustomTextField(iconName: "person.fill",
+                                    placeholder: "Kullanıcı Adı",
+                                    text: $username)
+                    .textContentType(.username)
+                }
+                
+                // MARK: - Ortak Alanlar
+                CustomTextField(iconName: "envelope.fill",
+                                placeholder: "E-posta",
+                                text: $email)
+                .keyboardType(.emailAddress)
+                .textContentType(.emailAddress)
+                
+                CustomTextField(iconName: "lock.fill",
+                                placeholder: "Şifre",
+                                text: $password,
+                                isSecure: true) // <-- Burası önemli
+                .textContentType(isRegisterMode ? .newPassword : .password)
+                // MARK: - Ana Buton
+                Button(action: {
+                    if isRegisterMode {
+                        // Yeni register fonksiyonunu çağır
+                        userVM.register(fullName: fullName,
+                                        username: username,
+                                        email: email,
+                                        password: password)
+                    } else {
+                        // Yeni login fonksiyonunu çağır
+                        userVM.login(email: email,
+                                     password: password)
                     }
-                }, message: {
-                    // Hata mesajı (örn: "E-posta zaten kullanılıyor")
-                    Text(userVM.errorMessage ?? "Bilinmeyen bir hata oluştu.")
-                })
+                }) {
+                    Text(isRegisterMode ? "Kayıt Ol" : "Giriş Yap")
+                        .font(.headline.bold())
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                }
+                .padding(.top, 10)
+                
+                Spacer() // Butonları yukarı iter
+                
+                // MARK: - Mod Değiştirme Butonu
+                Button(action: {
+                    withAnimation(.easeInOut) {
+                        isRegisterMode.toggle() // Modu değiştir
+                    }
+                }) {
+                    HStack {
+                        Text(isRegisterMode ? "Zaten bir hesabın var mı?" : "Hesabın yok mu?")
+                        Text(isRegisterMode ? "Giriş Yap" : "Kayıt Ol")
+                            .bold()
+                    }
+                    .font(.subheadline)
+                }
+                
             }
-            .navigationDestination(isPresented: $userVM.isLoggedIn) {
-                HomeView()
-                    .environmentObject(userVM)
-            }
+            .padding(.horizontal) // VStack'e kenar boşluğu
+            .padding(.top, 30) // Üstten boşluk
+            
+            .alert("Bir Sorun Oluştu", isPresented: .constant(userVM.errorMessage != nil), actions: {
+                // Sadece "Tamam" butonu
+                Button("Tamam") {
+                    userVM.errorMessage = nil // Alert'i kapatmak için hatayı sıfırla
+                }
+            }, message: {
+                // Hata mesajı (örn: "E-posta zaten kullanılıyor")
+                Text(userVM.errorMessage ?? "Bilinmeyen bir hata oluştu.")
+            })
         }
+        
     }
     // MARK: - Özel Alan Bileşeni (Component)
     struct CustomTextField: View {

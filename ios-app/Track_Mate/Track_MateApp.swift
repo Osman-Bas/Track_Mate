@@ -9,9 +9,23 @@ import SwiftUI
 
 @main
 struct TrackMateApp: App {
+    
+    // 1. ViewModel'i (motoru) en üst seviyede oluşturuyoruz.
+    //    Uygulama yaşadığı sürece bu ViewModel de yaşayacak.
+    @StateObject private var userVM = UserViewModel()
+
     var body: some Scene {
         WindowGroup {
-            LoginView()
+            // 2. Karar mekanizması:
+            //    Eğer kullanıcı giriş yapmışsa (init() sayesinde), HomeView'i göster.
+            if userVM.isLoggedIn {
+                HomeView()
+                    .environmentObject(userVM) // VM'i HomeView'a ve alt sekmelerine aktar
+            } else {
+                //    Giriş yapmamışsa, LoginView'i göster.
+                LoginView()
+                    .environmentObject(userVM) // VM'i LoginView'a aktar
+            }
         }
     }
 }

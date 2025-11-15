@@ -23,9 +23,12 @@ struct JournalEntryView: View {
     
     var body: some View {
         NavigationStack {
+            
             // ZStack hizalamasını (alignment) kaldırıyoruz.
             ZStack {
-                
+                Color("bej")
+                    .ignoresSafeArea()
+
                 // --- KATMAN 1: ANA İÇERİK (Mood, Journal, Kaydet Butonu) ---
                 // 'Kaydet' butonu artık bu VStack'in bir parçası
                 VStack(spacing: 20) {
@@ -80,7 +83,7 @@ struct JournalEntryView: View {
                             TextEditor(text: $journalVM.journalText)
                                 .frame(height: 200)
                                 .padding(8)
-                                .background(.ultraThinMaterial)
+                                .background(Color("pembe").opacity(0.5))
                                 .cornerRadius(10)
                                 .opacity(journalVM.journalText.isEmpty ? 0.8 : 1.0)
                             
@@ -107,7 +110,7 @@ struct JournalEntryView: View {
                             .font(.headline.bold())
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color.green)
+                            .background(Color("koyuyesil"))
                             .foregroundColor(.white)
                             .cornerRadius(10)
                     }
@@ -136,7 +139,7 @@ struct JournalEntryView: View {
                                 .font(.system(size: 25, weight: .bold))
                                 .foregroundColor(.white)
                                 .padding()
-                                .background(Color.blue)
+                                .background(Color("turuncu"))
                                 .clipShape(Circle())
                                 .shadow(radius: 5)
                         }
@@ -153,7 +156,7 @@ struct JournalEntryView: View {
                     HStack(spacing: 8) {
                         Image(systemName: "book.closed.fill")
                             .font(.headline)
-                            .foregroundColor(.blue) // İkona renk verelim
+                            .foregroundColor(.black) // İkona renk verelim
                         
                         Text("Günlük & Ruh Hali")
                             .font(.headline) // Metni de ikonla aynı boyuta getir

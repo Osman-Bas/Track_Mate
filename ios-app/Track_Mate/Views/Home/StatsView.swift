@@ -12,134 +12,186 @@ struct StatsView: View {
     
     // 1. Yeni ViewModel'imizi (motor) oluşturuyoruz
     @StateObject private var statsVM = StatsViewModel()
+    @State private var selectedChartPage: Int = 0
     
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 20) {
-                    
-                    // 2. ViewModel'in durumunu kontrol ediyoruz
-                    if statsVM.isLoading {
-                        // --- DURUM 1: YÜKLENİYOR ---
-                        ProgressView() // Dönen çember
-                            .padding(.top, 50)
-                        
-                    } else if let errorMessage = statsVM.errorMessage {
-                        // --- DURUM 2: HATA VAR ---
-                        Text("Hata: \(errorMessage)")
-                            .foregroundColor(.red)
-                            .padding()
-                        
-                    } else if let summary = statsVM.summary {
-                        // --- DURUM 3: BAŞARILI (Veri Geldi) ---
-                        
-                        // MARK: - 1. Görev Tamamlama (Donut Chart)
-                        VStack {
-                            Text("Görev Tamamlama Özeti")
-                                .font(.title2.bold())
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            
-                            // (completionPercentage kullanarak bir 'Gauge' veya 'Donut' grafiği)
-                            // Şimdilik basit bir yüzde gösterimi:
-                            Text("%\(summary.taskSummary.completionPercentage)")
-                                .font(.system(size: 50, weight: .bold, design: .rounded))
-                                .foregroundColor(.blue)
-                            Text("\(summary.taskSummary.completedTasks) / \(summary.taskSummary.totalTasks) Görev Tamamlandı")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
-                        .padding()
-                        .background(.thinMaterial)
-                        .cornerRadius(20)
-                        
-                        
-                        // MARK: - 2. Haftalık Aktivite (Bar Chart)
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("Haftalık Aktivite (Tamamlanan Görevler)")
-                                .font(.title2.bold())
-                            
-                            // Çubuk Grafik (Bar Chart)
-                            Chart(summary.weeklyActivity) { dayData in
-                                BarMark(
-                                    x: .value("Gün", dayData.day),
-                                    y: .value("Tamamlanan", dayData.completed)
-                                )
-                                .foregroundStyle(by: .value("Gün", dayData.day)) // Her çubuğu farklı renk yapar
-                            }
-                            .frame(height: 200) // Grafiğin yüksekliği
-                        }
-                        .padding()
-                        .background(.thinMaterial)
-                        .cornerRadius(20)
-                        
-                        
-                        // MARK: - 3. Ruh Hali Dağılımı (Pie Chart)
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("Ruh Hali Dağılımı")
-                                .font(.title2.bold())
-                            
-                            // Pasta Grafik (Pie Chart)
-                            // 'moodChartData' dizisini kullanıyoruz
-                            Chart(summary.moodChartData) { dataPoint in
-                                SectorMark(
-                                    angle: .value("Sayı", dataPoint.count),
-                                    innerRadius: .ratio(0.5), // Ortası delik (Donut)
-                                    angularInset: 1.5 // Dilimler arası boşluk
-                                )
-                                .foregroundStyle(by: .value("Ruh Hali", dataPoint.name))
-                                .cornerRadius(5)
-                            }
-                            .frame(height: 200) // Grafiğin yüksekliği
-                        }
-                        .padding()
-                        .background(.thinMaterial)
-                        .cornerRadius(20)
-                        
-                        
-                        // MARK: - 4. Öncelik Dağılımı (Pie Chart)
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("Görev Öncelik Dağılımı")
-                                .font(.title2.bold())
-                            
-                            // Pasta Grafik (Pie Chart)
-                            // 'priorityChartData' dizisini kullanıyoruz
-                            Chart(summary.priorityChartData) { dataPoint in
-                                SectorMark(
-                                    angle: .value("Sayı", dataPoint.count),
-                                    innerRadius: .ratio(0.5),
-                                    angularInset: 1.5
-                                )
-                                .foregroundStyle(by: .value("Öncelik", dataPoint.name))
-                                .cornerRadius(5)
-                            }
-                            .frame(height: 200)
-                        }
-                        .padding()
-                        .background(.thinMaterial)
-                        .cornerRadius(20)
-                        
-                        
-                    } else {
-                        // --- DURUM 4: BAŞLANGIÇ (Boş) ---
-                        // (Ekran ilk açıldığında, henüz yüklenmemişken)
-                        Text("İstatistikler yükleniyor...")
-                            .foregroundColor(.secondary)
-                            .padding(.top, 50)
-                    }
-                    
-                    Spacer() // Her şeyi yukarı iter
-                }
-                .padding()
+            NavigationStack {
                 
-            } // ScrollView sonu
-            .navigationTitle("İstatistikler")
-            .onAppear {
-                // 3. Ekran açıldığı anda "motoru" çalıştır
-                print("StatsView göründü, istatistikler çekiliyor...")
-                statsVM.fetchStats()
+                // --- DÜZELTME 1: Ana ZStack ---
+                // 'bej' rengini, her şeyin arkasında duran
+                // bir 'ZStack'in en alt katmanına taşıyoruz.
+                ZStack {
+                    
+                    // KATMAN 1: ARKA PLAN RENGİ
+                    Color("bej")
+                        .ignoresSafeArea()
+
+                    // KATMAN 2: ANA İÇERİK
+                    VStack(spacing: 20) {
+                        
+                        // Color("bej") buradan SİLİNDİ (artık arkada)
+                        
+                        // 1. Durum Kontrolü (isLoading, error, summary)
+                        if statsVM.isLoading {
+                            Spacer()
+                            ProgressView()
+                            Spacer()
+                            
+                        } else if let errorMessage = statsVM.errorMessage {
+                            Spacer()
+                            Text("Hata: \(errorMessage)")
+                                .foregroundColor(.red)
+                                .padding()
+                            Spacer()
+                            
+                        } else if let summary = statsVM.summary {
+                            
+                            // --- AŞAMA 1: SABİT ÜST KART (YÜZDE) ---
+                            VStack {
+                                Text("Görev Tamamlama Özeti")
+                                    .font(.title2.bold())
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                
+                                Text("%\(summary.taskSummary.completionPercentage)")
+                                    .font(.system(size: 50, weight: .bold, design: .rounded))
+                                    .foregroundColor(.blue)
+                                Text("\(summary.taskSummary.completedTasks) / \(summary.taskSummary.totalTasks) Görev Tamamlandı")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+                            .padding()
+                            .background(Color("pembe")) // Özel renginiz
+                            .cornerRadius(20)
+                            .padding(.horizontal) // Kenarlara boşluk
+                            
+
+                            // --- AŞAMA 2: KAYDIRILABİLİR GRAFİKLER (CAROUSEL) ---
+                            TabView(selection: $selectedChartPage) {
+                                
+                                // --- Sayfa 1: Haftalık Aktivite ---
+                                VStack(alignment: .leading, spacing: 10) {
+                                    Text("Haftalık Aktivite")
+                                        .font(.title2.bold())
+                                    
+                                    Chart(summary.weeklyActivity) { dayData in
+                                        BarMark(
+                                            x: .value("Gün", dayData.day),
+                                            y: .value("Tamamlanan", dayData.completed)
+                                        )
+                                        .foregroundStyle(by: .value("Gün", dayData.day))
+                                    }
+                                    .frame(height: 200)
+                                }
+                                .padding()
+                                .background(.thinMaterial)
+                                .cornerRadius(20)
+                                .padding(.horizontal)
+                                .tag(0) // Bu, 0 numaralı sayfa
+
+                                
+                                // --- Sayfa 2: Ruh Hali Dağılımı ---
+                                VStack(alignment: .leading, spacing: 10) {
+                                    Text("Ruh Hali Dağılımı")
+                                        .font(.title2.bold())
+                                    
+                                    Chart(summary.moodChartData) { dataPoint in
+                                        SectorMark(
+                                            angle: .value("Sayı", dataPoint.count),
+                                            innerRadius: .ratio(0.5),
+                                            angularInset: 1.5
+                                        )
+                                        .foregroundStyle(by: .value("Ruh Hali", dataPoint.name))
+                                        .cornerRadius(5)
+                                    }
+                                    .frame(height: 200)
+                                }
+                                .padding()
+                                .background(.thinMaterial)
+                                .cornerRadius(20)
+                                .padding(.horizontal)
+                                .tag(1) // Bu, 1 numaralı sayfa
+
+                                
+                                // --- Sayfa 3: Öncelik Dağılımı ---
+                                VStack(alignment: .leading, spacing: 10) {
+                                    Text("Görev Öncelik Dağılımı")
+                                        .font(.title2.bold())
+                                    
+                                    Chart(summary.priorityChartData) { dataPoint in
+                                        SectorMark(
+                                            angle: .value("Sayı", dataPoint.count),
+                                            innerRadius: .ratio(0.5),
+                                            angularInset: 1.5
+                                        )
+                                        .foregroundStyle(by: .value("Öncelik", dataPoint.name))
+                                        .cornerRadius(5)
+                                    }
+                                    .frame(height: 200)
+                                }
+                                .padding()
+                                .background(.thinMaterial)
+                                .cornerRadius(20)
+                                .padding(.horizontal)
+                                .tag(2) // Bu, 2 numaralı sayfa
+                                
+                            }
+                            .tabViewStyle(.page(indexDisplayMode: .never))
+                            .frame(height: 250)
+                            
+                            
+                            // --- Özel Daireler (Page Indicator) ---
+                            // (Kodunuz mükemmeldi, aynen aldım)
+                            HStack(spacing: 10) {
+                                ForEach(0..<3) { index in
+                                    if selectedChartPage == index {
+                                        Circle()
+                                            .fill(Color("yesil")) // Özel renginiz
+                                            .frame(width: 10, height: 10)
+                                    } else {
+                                        Circle()
+                                            .stroke(Color.gray.opacity(0.5), lineWidth: 1)
+                                            .frame(width: 10, height: 10)
+                                    }
+                                }
+                            }
+                            .animation(.spring(), value: selectedChartPage)
+
+                            Spacer() // Her şeyi yukarı iter
+                            
+                        } else {
+                            // --- DURUM 4: BAŞLANGIÇ (Boş) ---
+                            Text("İstatistikler yükleniyor...")
+                                .foregroundColor(.secondary)
+                                .padding(.top, 50)
+                        }
+                    } // Ana VStack sonu
+                    
+                } // Ana ZStack sonu
+                .toolbar {
+                    ToolbarItem(placement: .principal) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "calendar")
+                                .font(.headline)
+                                .foregroundColor(.black)
+                            
+                            Text("İstatistikler")
+                                .font(.headline)
+                                .fontWeight(.bold)
+                        }
+                        // .padding(.top, 50) 'hack'i buradan SİLİNDİ
+                    }
+                }
+                .navigationBarTitleDisplayMode(.inline) // Bu, başlığın yerini standartlaştırır
+                .onAppear {
+                    print("StatsView göründü, istatistikler çekiliyor...")
+                    statsVM.fetchStats()
+                }
             }
         }
-    }
+    
+    
+    
+    
 }
 
 // MARK: - Preview

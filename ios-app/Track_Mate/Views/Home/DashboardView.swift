@@ -13,15 +13,17 @@ struct DashboardView: View {
     @EnvironmentObject var taskVM: TaskViewModel
     @State private var showAddTask = false
     @State private var selectedTask: TaskItem? = nil
-//    @State private var showEditTask = false
+    @State private var backgroundOffset: CGSize = .zero
     @State private var showSuccessBanner = false
     @State private var successMessage = ""
     
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(.systemGroupedBackground)
+                Color("bej")
                     .ignoresSafeArea()
+                
+                
                 
                 // MARK: - Success Banner
                 if showSuccessBanner {
@@ -126,7 +128,7 @@ struct DashboardView: View {
                                         .contextMenu {
                                             Button {
                                                 selectedTask = task
-//                                                showEditTask = true
+                                                //                                                showEditTask = true
                                             } label: {
                                                 Label("Görevi Düzenle", systemImage: "pencil")
                                             }
@@ -146,13 +148,13 @@ struct DashboardView: View {
                             .padding(.horizontal)
                         }
                         .sheet(item: $selectedTask) { task in
-                                                // 'item' kullandığımız için 'if let'e gerek yok.
-                                                // 'task' zaten dolu olarak gelir.
-                                                EditTaskView(task: task, onSave: {
-                                                    showBanner(message: "Görev güncellendi ✏️")
-                                                })
-                                                .environmentObject(taskVM)
-                                            }
+                            // 'item' kullandığımız için 'if let'e gerek yok.
+                            // 'task' zaten dolu olarak gelir.
+                            EditTaskView(task: task, onSave: {
+                                showBanner(message: "Görev güncellendi ✏️")
+                            })
+                            .environmentObject(taskVM)
+                        }
                         
                         
                         
@@ -170,9 +172,10 @@ struct DashboardView: View {
                                 .font(.system(size: 25, weight: .bold))
                                 .foregroundColor(.white)
                                 .padding()
-                                .background(Color.blue)
+                                .background(Color("turuncu"))
                                 .clipShape(Circle())
                                 .shadow(radius: 5)
+                            
                         }
                         .padding()
                         .sheet(isPresented: $showAddTask) {
