@@ -1,152 +1,167 @@
 /*
- * VERİ TOHUMLAMA (DATABASE SEEDER) SCRIPT'İ (GÜNCELLENMİŞ VERSİYON)
- * * Amaç: İstatistik (StatsView) sayfasını test etmek için
- * veritabanını SON 20 GÜNE YAYILMIŞ sahte verilerle doldurmak.
- * * Nasıl Çalıştırılır:
- * 1. Sunucunuzun (npm run server) çalışmasına GEREK YOK.
- * 2. Terminalde (server/ klasöründeyken):
- * node seed.js
+ * Gelişmiş Veri Tohumlama (Database Seeder) Script'i (v3 - Kişisel)
+ * * Amaç: AI'ın 'journal' metinlerindeki kişisel *nedenlere*
+ * nasıl tepki verdiğini test etmek.
+ * * NASIL ÇALIŞTIRILIR (Terminalde server/ klasöründeyken):
+ * * 1. "Stresli Öğrenci" Senaryosu:
+ * node seed.js stressed_school
+ *
+ * 2. "Stresli Çalışan" Senaryosu:
+ * node seed.js stressed_work
+ *
+ * 3. "Üretken/Mutlu Kullanıcı" Senaryosu:
+ * node seed.js productive
  */
 
 import mongoose from 'mongoose';
-// 'dotenv' paketini kullanarak .env dosyasını manuel okuyoruz (Node versiyonu bağımsız)
-import dotenv from 'dotenv'; 
-dotenv.config(); 
+import dotenv from 'dotenv';
+dotenv.config();
 
-import connectDB from './configs/db.js'; // DB bağlantı fonksiyonumuz
-
-// Modellerimizi import ediyoruz
+import connectDB from './configs/db.js';
 import User from './models/User.js';
 import Task from './models/Task.js';
 import JournalEntry from './models/JournalEntry.js';
 
-// --- Sahte Veri Tanımları ---
-
-// Task.js modelimizdeki 'enum' ile EŞLEŞMELİ
-const TASK_PRIORITIES = ['Düşük', 'Orta', 'Yüksek']; 
-
-// JournalEntry.js modelimizdeki 'enum' ile EŞLEŞMELİ
+// --- Sabitler ---
+const TASK_PRIORITIES = ['Düşük', 'Orta', 'Yüksek'];
 const MOODS = ['berbat', 'uzgun', 'normal', 'mutlu', 'harika'];
 
-const SAMPLE_TASKS = [
-    "Track_Mate UI tasarımını bitir", "StatsView API'sini test et", "iOS bug'larını düzelt",
-    "Sunucuyu deploy et", "Haftalık toplantı notlarını hazırla", "Veritabanı yedeğini al",
-    "Auth rotalarını gözden geçir", "Yeni özellikleri planla", "Kullanıcı geri bildirimlerini analiz et"
+// --- GÜNCELLEME 1: ÇOK DAHA KİŞİSEL GÜNLÜK METİNLERİ ---
+// (Artık sadece 'bunalmış' demiyor, 'neden'ini söylüyoruz)
+const STRESSED_JOURNALS_WORK = [ // İŞ TEMALI
+    "Bugünkü sunum berbattı, proje yetişmeyecek gibi hissediyorum.",
+    "Patronumla tartıştım, motivasyonum sıfır.",
+    "Yarınki toplantı için çok stresliyim, sunumu hazırlamadım."
 ];
-
-const SAMPLE_JOURNALS = [
-    "Bugün çok verimli geçti, istatistik API'si tamamlandı.",
-    "Biraz yorgun hissediyorum, kahve molası şart.",
-    "iOS simülatöründe garip bir hata aldım, yarın bakacağım.",
-    "Motivasyonum yüksek, yeni özelliklara hazırım.",
-    "Kodlama yaparken zamanın nasıl geçtiğini anlamadım."
+const STRESSED_JOURNALS_SCHOOL = [ // OKUL TEMALI
+    "Final haftası çok yorucu, 3 sınavım daha var.",
+    "Matematik vizesinden kaldım, moralim çok bozuk.",
+    "Tezimi yetiştiremeyeceğim diye çok korkuyorum."
+];
+const PRODUCTIVE_JOURNALS = [ // ÜRETKEN TEMALI
+    "Bugün harika bir gündü, çok iş bitirdim.",
+    "İyi bir rutin yakaladım, enerji doluyum.",
+    "Zor bir görevi tamamladım, kendimle gurur duyuyorum."
 ];
 
 // --- Yardımcı Fonksiyonlar ---
-
-// Bir diziden rastgele bir eleman seçer
 const getRandomItem = (arr) => arr[Math.floor(Math.random() * arr.length)];
-
-// (Eski 'getRandomPastDate' fonksiyonunu kaldırdık, çünkü artık yapısal ilerleyeceğiz)
-
+const getRandomPastDate = (days = 7) => {
+    const date = new Date();
+    date.setDate(date.getDate() - Math.floor(Math.random() * days));
+    return date;
+};
 
 // --- Ana Tohumlama Fonksiyonu ---
 const seedDatabase = async () => {
+    // 1. HANGİ SENARYO?
+    // Artık 3 senaryomuz var (stressed_work, stressed_school, productive)
+    const scenario = process.argv[2] || 'stressed_work'; // Varsayılan: iş stresi
+
+    if (!['stressed_work', 'stressed_school', 'productive'].includes(scenario)) {
+        console.error('HATA: Geçersiz senaryo.');
+        console.log('Lütfen "stressed_work", "stressed_school" veya "productive" kullanın.');
+        return;
+    }
+
     try {
         console.log('Veritabanına bağlanılıyor...');
-        await connectDB(); // db.js'deki fonksiyonumuzla bağlan
+        await connectDB();
         console.log('Veritabanına bağlandı.');
 
-        // 1. BU VERİLERİ KİME ATAYACAĞIZ?
-        //    (Test için kaydolmuş) ilk kullanıcıyı bul.
-        const user = await User.findOne();
+        // 2. HANGİ KULLANICI? (EN YENİ KAYDOLAN)
+        const user = await User.findOne().sort({ createdAt: -1 });
 
         if (!user) {
-            console.error('HATA: Veritabanında en az bir kayıtlı kullanıcı bulunamadı.');
-            console.log('Lütfen önce test için bir kullanıcı kaydı (register) yapın.');
+            console.error('HATA: Veritabanında hiçbir kullanıcı bulunamadı.');
             return;
         }
 
-        console.log(`Veriler "${user.username}" (${user.email}) kullanıcısına atanacak...`);
+        console.log(`\n--- SENARYO: "${scenario}" ---`);
+        console.log(`Hedef kullanıcı: "${user.username}" (${user.email})`);
 
-        // 2. TEMİZLİK: Bu kullanıcıya ait ESKİ görevleri ve günlükleri SİL
+        // 3. TEMİZLİK: Bu kullanıcıya ait ESKİ verileri SİL
         await Task.deleteMany({ user: user._id });
         await JournalEntry.deleteMany({ user: user._id });
         console.log('Eski test verileri temizlendi.');
 
-        // --- YENİ YAPI (GÜNCELLENDİ) ---
-        // 'totalDays' gün geriye giderek her güne 'tasksPerDay' görev ekle
-        
         const taskPromises = [];
         const journalPromises = [];
-        const totalDaysToSeed = 20; // Son 20 gün
-        const tasksPerDay = 4; // Her gün için 4 görev (Toplam 80 görev)
+        let moodToSet = 'normal'; // Varsayılan anlık ruh hali
 
-        console.log(`Geçmiş ${totalDaysToSeed} gün için sahte veri oluşturuluyor...`);
+        // --- 4A. "Stresli" Senaryo Kurulumu (İş veya Okul) ---
+        if (scenario.startsWith('stressed')) {
+            moodToSet = 'uzgun';
+            const journalSet = (scenario === 'stressed_work') ? STRESSED_JOURNALS_WORK : STRESSED_JOURNALS_SCHOOL;
+            const taskTitlePrefix = (scenario === 'stressed_work') ? "(İş Stresi)" : "(Okul Stresi)";
 
-        for (let day = 0; day < totalDaysToSeed; day++) {
+            console.log(`"${scenario}" verisi oluşturuluyor...`);
             
-            // 1. O GÜNÜN TARİHİNİ HESAPLA (day=0 'bugün', day=1 'dün'...)
-            const specificDate = new Date();
-            specificDate.setDate(specificDate.getDate() - day); // 'day' gün geriye git
-            // Görevlerin/Günlüklerin gün içinde rastgele bir saatte oluşturulması için:
-            specificDate.setHours(
-                Math.floor(Math.random() * 10) + 9, // Sabah 9 ile akşam 7 (19) arası
-                Math.floor(Math.random() * 60)
-            );
-
-            // 2. O GÜN İÇİN 'tasksPerDay' ADET GÖREV OLUŞTUR
-            for (let i = 0; i < tasksPerDay; i++) {
-                const isCompleted = Math.random() > 0.3; // %70'i tamamlanmış olsun
-                
-                const task = new Task({
+            // GÖREVLER (5 adet BİTMEMİŞ YÜKSEK öncelikli)
+            for (let i = 0; i < 5; i++) {
+                taskPromises.push(new Task({
                     user: user._id,
-                    title: `${getRandomItem(SAMPLE_TASKS)} (Gün ${day}, Görev ${i+1})`,
-                    description: "Bu, seeder script tarafından oluşturulmuş bir test görevidir.",
-                    priority: getRandomItem(TASK_PRIORITIES),
-                    isCompleted: isCompleted,
-                    date: specificDate,
-                    // İSTATİSTİKLER İÇİN ÇOK ÖNEMLİ:
-                    // 'createdAt' ve 'updatedAt' tarihlerini de sahte tarihle
-                    // değiştiriyoruz ki 'weeklyActivity' grafiği doğru dolsun.
-                    createdAt: specificDate, 
-                    updatedAt: isCompleted ? specificDate : new Date() 
-                });
-                taskPromises.push(task.save());
+                    title: `${taskTitlePrefix} Acil Görev ${i + 1}`,
+                    isCompleted: false,
+                    priority: 'Yüksek',
+                    createdAt: getRandomPastDate(2)
+                }).save());
             }
 
-            // 3. O GÜN İÇİN 1 GÜNLÜK KAYDI OLUŞTUR
-            // (Her gün günlük tutulmamış hissi vermek için %80 ihtimalle ekleyelim)
-            if (Math.random() > 0.2) { 
-                const entry = new JournalEntry({
+            // GÜNLÜKLER (Spesifik metinler içeren 3 negatif kayıt)
+            for (let i = 0; i < 3; i++) {
+                journalPromises.push(new JournalEntry({
                     user: user._id,
-                    mood: getRandomItem(MOODS),
-                    journal: `${getRandomItem(SAMPLE_JOURNALS)} (Gün ${day})`,
-                    // İSTATİSTİKLER İÇİN ÇOK ÖNEMLİ:
-                    // 'createdAt' tarihini sahte tarihle değiştiriyoruz
-                    createdAt: specificDate 
-                });
-                journalPromises.push(entry.save());
+                    mood: getRandomItem(['uzgun', 'berbat']),
+                    journal: getRandomItem(journalSet), // KİŞİSEL METİN BURADA
+                    createdAt: getRandomPastDate(7)
+                }).save());
             }
         }
-        // --- GÜNCELLEME BİTTİ ---
 
+        // --- 4B. "Üretken" Senaryo Kurulumu ---
+        if (scenario === 'productive') {
+            moodToSet = 'mutlu';
+            console.log('"Üretken Kullanıcı" verisi oluşturuluyor...');
+            
+            // GÖREVLER (15 adet, çoğu tamamlanmış)
+            for (let i = 0; i < 15; i++) {
+                taskPromises.push(new Task({
+                    user: user._id,
+                    title: `(Üretken Test) Görev ${i + 1}`,
+                    isCompleted: Math.random() > 0.2, // %80'i tamamlanmış
+                    priority: getRandomItem(TASK_PRIORITIES),
+                    createdAt: getRandomPastDate(7)
+                }).save());
+            }
 
-        // 4. Tüm verilerin kaydedilmesini bekle
+            // GÜNLÜKLER (Spesifik metinler içeren 3 pozitif kayıt)
+            for (let i = 0; i < 3; i++) {
+                journalPromises.push(new JournalEntry({
+                    user: user._id,
+                    mood: getRandomItem(['mutlu', 'harika']),
+                    journal: getRandomItem(PRODUCTIVE_JOURNALS), // KİŞİSEL METİN BURADA
+                    createdAt: getRandomPastDate(7)
+                }).save());
+            }
+        }
+        
+        // 5. ANLIK RUH HALİNİ (currentMood) AYARLA
+        await User.findByIdAndUpdate(user._id, { currentMood: moodToSet });
+
+        // 6. Tüm verilerin kaydedilmesini bekle
         await Promise.all(taskPromises);
         await Promise.all(journalPromises);
 
         console.log(`✅ ${taskPromises.length} adet sahte GÖREV oluşturuldu.`);
         console.log(`✅ ${journalPromises.length} adet sahte GÜNLÜK kaydı oluşturuldu.`);
-        
+        console.log(`✅ Kullanıcının anlık ruh hali (currentMood) -> "${moodToSet}" olarak ayarlandı.`);
 
         console.log('\n--- Tohumlama (Seeding) Başarıyla Tamamlandı! ---');
-        console.log('Şimdi `GET /api/stats/summary` rotasını test edebilirsiniz.');
 
     } catch (err) {
         console.error('Tohumlama sırasında bir hata oluştu:', err.message);
     } finally {
-        // Hata olsa da, olmasa da veritabanı bağlantısını kapat
         await mongoose.disconnect();
         console.log('Veritabanı bağlantısı kapatıldı.');
     }
