@@ -18,7 +18,7 @@ class StatsViewModel: ObservableObject {
     @Published var errorMessage: String? = nil
     
     // API Adresi (Sude'nin server.js'ine göre)
-    private let apiBaseURL = "http://192.168.8.164:3000/api/stats"
+    private let apiBaseURL = "http://localhost:3000/api/stats"
 
     // MARK: - İstatistikleri Getir (GET /api/stats/summary)
     

@@ -44,7 +44,7 @@ struct SettingsView: View {
                     
                     // MARK: - Bölüm 2: Uygulama
                     Section(header: Text("Uygulama")) {
-                        Text("Sürüm 1.0.0")
+                        Text("Sürüm 2.1.3")
                             .foregroundColor(.secondary)
                         // (Gelecekte buraya "Bildirim Ayarları" vb. eklenebilir)
                     }

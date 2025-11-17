@@ -10,24 +10,14 @@ internal import Combine
 
 // Sude'nin 'JournalEntry.js' modeline uyan
 // yeni bir Swift 'struct'ı oluşturuyoruz.
-struct JournalEntry: Identifiable, Codable, Hashable {
-    var id: String?
-    var mood: String
-    var journal: String
-    var createdAt: String // Tarihi String olarak alacağız (şimdilik)
-    
-    enum CodingKeys: String, CodingKey {
-        case id = "_id"
-        case mood, journal, createdAt
-    }
-}
+
 
 class JournalViewModel: ObservableObject {
     
     // API Adresleri
     // İki farklı 'base URL'e ihtiyacımız var
-    private let authApiURL = "http://192.168.8.164:3000/api/auth"
-    private let journalApiURL = "http://192.168.8.164:3000/api/journal"
+    private let authApiURL = "http://localhost:3000/api/auth"
+    private let journalApiURL = "http://localhost:3000/api/journal"
     
     // MARK: - @Published Değişkenleri
     // Bu, "Geçmiş Günlükler" sekmesini dolduracak
