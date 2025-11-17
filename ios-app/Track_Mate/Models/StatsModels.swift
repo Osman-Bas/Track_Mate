@@ -40,8 +40,13 @@ struct TaskSummary: Codable {
     let completedTasks: Int
     let completionPercentage: Int
     let pendingTasks: Int
+    var completionChartData: [ChartDataPoint] {
+            [
+                .init(name: "Tamamlanan", count: completedTasks),
+                .init(name: "Bekleyen", count: pendingTasks)
+            ]
+        }
 }
-
 // MARK: - PriorityBreakdown
 struct PriorityBreakdown: Codable {
     let high: Int

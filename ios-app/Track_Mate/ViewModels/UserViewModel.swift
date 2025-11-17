@@ -33,7 +33,7 @@ class UserViewModel: ObservableObject {
     @Published var isLoggedIn: Bool = false
     @Published var errorMessage: String? = nil
     // MARK: - API Adresleri
-    private let apiBaseURL = "http://192.168.8.164:3000"
+    private let apiBaseURL = "http://localhost:3000"
     
     // GİRİŞ YAP FONKSİYONU (Ağ isteği eklendi)
     func login(email: String, password: String) {

@@ -11,55 +11,114 @@ struct JournalHistoryView: View {
     
     // 1. Ana ekrandaki 'JournalViewModel'i dinle
     @EnvironmentObject var journalVM: JournalViewModel
-    
+    @State private var selectedEntry: JournalEntry? = nil
     var body: some View {
-        
-        // --- YENİ KOD BAŞLANGICI ---
-        Group { // Birden fazla durumu yönetmek için Group kullan
+        ZStack {
             
-            if journalVM.isHistoryLoading {
-                // DURUM 1: YÜKLENİYOR
-                ProgressView()
+            // KATMAN 1: ARKA PLAN RENGİ
+            Color("bej")
+                .ignoresSafeArea()
+            // Ana Konteyner (VStack)
+            VStack {
                 
-            } else if journalVM.pastEntries.isEmpty {
-                // DURUM 2: YÜKLEME BİTTİ AMA LİSTE BOŞ
-                Text("Henüz hiç günlük kaydınız yok.")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+                // --- DURUM KONTROLÜ ---
+                if journalVM.isHistoryLoading {
+                    // DURUM 1: YÜKLENİYOR
+                    Spacer()
+                    ProgressView("Geçmiş Günlükler Yükleniyor...")
+                    Spacer()
                     
-            } else {
-                // DURUM 3: VERİ GELDİ
-                List(journalVM.pastEntries) { entry in
-                    // ... (Satır tasarımı - değişiklik yok) ...
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text(entry.mood.capitalized)
-                                .font(.headline)
-                                .padding(8)
-                                .background(moodColor(for: entry.mood).opacity(0.15))
-                                .cornerRadius(10)
+                } else {
+                    
+                    // --- DURUM 2: YÜKLEME BİTTİ ---
+                    
+                    // 1. TAKVİMİN KENDİSİ (Karta dönüştürüldü)
+                    CalendarView(
+                        pastEntries: $journalVM.pastEntries,
+                        selectedEntry: $selectedEntry
+                    )
+                    .padding() // Takvime iç boşluk ver
+                    .background(.thinMaterial) // "Buzlu cam" arka planı
+                    .cornerRadius(20) // Köşeleri yuvarlat
+                    .padding(.horizontal) // Kartın kenarlara yapışmasını engelle
+                    .frame(height: 390) // Yüksekliği koru
+                    
+                    
+                    // 2. SEÇİLEN GÜNÜN DETAYI (Karta dönüştürüldü)
+                    
+                    // --- YENİ KAPSAYICI KART ---
+                    VStack {
+                        if let entry = selectedEntry {
+                            // DURUM 1: GÜNLÜK SEÇİLDİ
+                            VStack(alignment: .leading, spacing: 15) {
+                                HStack {
+                                    Text(entry.mood.capitalized)
+                                        .font(.title2.bold())
+                                        .padding(10)
+                                        .background(moodColor(for: entry.mood).opacity(0.15))
+                                        .cornerRadius(10)
+                                    
+                                    Spacer()
+                                    
+                                    Text(formatDate(entry.createdAt))
+                                        .font(.headline)
+                                        .foregroundColor(.secondary)
+                                }
+                                
+                                // Günlük metni için kaydırılabilir alan
+                                ScrollView {
+                                    Text(entry.journal.isEmpty ? "Bu gün için günlük metni girilmemiş." : entry.journal)
+                                        .font(.body)
+                                        .foregroundColor(entry.journal.isEmpty ? .secondary : .primary)
+                                        .frame(maxWidth: .infinity, alignment: .leading) // Metni sola yasla
+                                }
+                            }
+                            .transition(.opacity) // Sadece yumuşak geçiş
+                            
+                        } else {
+                            // DURUM 2: GÜNLÜK SEÇİLMEDİ (Placeholder)
                             Spacer()
-                            Text(formatDate(entry.createdAt))
-                                .font(.caption)
+                            Text("Detayları görmek için takvimden renkli bir güne dokunun.")
+                                .font(.subheadline)
                                 .foregroundColor(.secondary)
-                        }
-                        if !entry.journal.isEmpty {
-                            Text(entry.journal)
-                                .font(.body)
-                                .lineLimit(3)
+                                .multilineTextAlignment(.center)
+                                .padding()
+                            Spacer()
                         }
                     }
-                    .padding(.vertical, 5)
+                    .frame(height: 180) // Karta sabit bir yükseklik ver (Takvimle denge)
+                    .padding() // Kartın iç boşluğu
+                    .background(.thinMaterial) // "Buzlu cam" arka plan
+                    .cornerRadius(20) // Köşeleri yuvarlat
+                    .padding(.horizontal) // Kartın dış boşluğu
+                    .padding(.bottom, 5,)
+                    .padding(.top, 20)// Kartın alta yapışmaması için
+                    // --- YENİ KAPSAYICI KART SONU ---
                 }
             }
-        }
-        // --- YENİ KOD SONU ---
-        
-        .navigationTitle("Geçmiş Günlükler")
-        .onAppear {
-            // Bu ekran (Geçmiş) AÇILDIĞINDA verileri çek
-            print("JournalHistoryView göründü, geçmiş günlükler çekiliyor...")
-            journalVM.fetchJournalEntries()
+            .animation(.default, value: journalVM.isHistoryLoading) // Yükleme bittiğinde yumuşak geçiş
+            .animation(.default, value: selectedEntry) // Detay ekranı geldiğinde yumuşak geçiş
+            
+            .toolbar { // <-- YENİ BLOK BAŞLANGICI
+                // Başlığın olduğu orta alana (.principal) özel bir View yerleştir
+                ToolbarItem(placement: .principal) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "calendar")
+                            .font(.headline)
+                            .foregroundColor(.black) // İkona renk verelim
+                        
+                        Text("Geçmiş Günlükler")
+                            .font(.headline) // Metni de ikonla aynı boyuta getir
+                            .fontWeight(.bold)
+                    }
+                }
+            } // <-- YENİ BLOK SONU
+            
+            .onAppear {
+                // Bu ekran (Geçmiş) AÇILDIĞINDA verileri çek
+                print("JournalHistoryView göründü, geçmiş günlükler çekiliyor...")
+                journalVM.fetchJournalEntries()
+            }
         }
     }
     

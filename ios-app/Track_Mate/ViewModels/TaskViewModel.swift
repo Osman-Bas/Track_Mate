@@ -15,7 +15,7 @@ class TaskViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     
     // API Ana Adresi (UserViewModel ile aynı)
-    private let apiBaseURL = "http://192.168.8.164:3000/api/tasks"
+    private let apiBaseURL = "http://localhost:3000/api/tasks"
     
     // MARK: - 1. GÖREVLERİ GETİR (GET /api/tasks)
     func fetchTasks() {
