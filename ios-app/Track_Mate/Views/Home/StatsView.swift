@@ -104,7 +104,7 @@ struct StatsView: View {
                             
                             // --- Sayfa 1: Haftalık Aktivite ---
                             VStack(alignment: .leading, spacing: 10) {
-                                Text("Haftalık Aktivite")
+                                Text("Bu Hafta Tamamlanan Görevler")
                                     .font(.title2.bold())
                                 
                                 Chart(summary.weeklyActivity) { dayData in
@@ -158,7 +158,7 @@ struct StatsView: View {
                             
                             // --- Sayfa 2: Ruh Hali Dağılımı ---
                             VStack(alignment: .leading, spacing: 10) {
-                                Text("Ruh Hali Dağılımı")
+                                Text("30 Günlük Ruh Hali Dağılımı")
                                     .font(.title2.bold())
                                 
                                 Chart(summary.moodChartData) { dataPoint in
@@ -215,7 +215,7 @@ struct StatsView: View {
                             
                             // --- Sayfa 3: Görev Öncelik Dağılımı (Fikir 2: Lollipop) ---
                             VStack(alignment: .leading, spacing: 10) {
-                                Text("Görev Öncelik Dağılımı")
+                                Text("Haftalık Görev Öncelik Dağılımı")
                                     .font(.title2.bold())
                                 
                                 Chart(summary.priorityChartData) { dataPoint in
