@@ -123,7 +123,7 @@ struct DashboardView: View {
                         // 3. Durum: Yükleme bitti VE görevler var
                         ScrollView {
                             VStack(spacing: 15) {
-                                ForEach(taskVM.tasks) { task in
+                                ForEach(taskVM.tasks.filter { Calendar.current.isDateInToday($0.date) }) { task in
                                     TaskCard(task: task)
                                         .contextMenu {
                                             Button {
