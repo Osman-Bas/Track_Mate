@@ -3,60 +3,71 @@ import JournalEntry from '../models/JournalEntry.js';
 import mongoose from 'mongoose';
 
 // @route   GET /api/stats/summary
-// @desc    Kullanıcının tüm istatistik özetini (tasks + journal) al
-// @access  Private (authMiddleware ile korunacak)
+// @desc    Kullanıcının istatistik özetini (Filtreli: Haftalık/Aylık) al
+// @access  Private
 export const getStatsSummary = async (req, res) => {
     try {
-        // 1. Giriş yapmış kullanıcının ID'sini al
         const userId = new mongoose.Types.ObjectId(req.user.id);
 
-        // 2. HAFTALIK AKTİVİTE İÇİN TARİH HESAPLAMASI
-        // Bu haftanın Pazar gününü bul (MongoDB'de hafta Pazar günü başlar - 1)
+        // --- TARİH HESAPLAMALARI ---
         const today = new Date();
-        const firstDayOfWeek = new Date(today.setDate(today.getDate() - today.getDay() + (today.getDay() === 0 ? -6 : 1) - 1)); // Bu Pazar
+        
+        // 1. BU HAFTANIN BAŞLANGICI (Pazar gecesi 00:00)
+        // (Görev Öncelik Dağılımı ve Haftalık Aktivite için)
+        const firstDayOfWeek = new Date(today);
+        firstDayOfWeek.setDate(today.getDate() - today.getDay()); // Pazar gününe git
         firstDayOfWeek.setHours(0, 0, 0, 0);
 
-        // --- PARALEL SORGULAMA BAŞLANGICI ---
-        // İki farklı koleksiyonu AYNI ANDA sorgulamak için Promise.all kullanıyoruz.
-        // Bu, API'yi çok daha hızlı yapar.
+        // 2. 30 GÜN ÖNCESİ
+        // (Ruh Hali Dağılımı için)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        thirtyDaysAgo.setHours(0, 0, 0, 0);
 
+
+        // --- PARALEL SORGULAMA ---
         const [taskStats, journalStats] = await Promise.all([
 
             // --- SORGULAMA 1: GÖREV (TASK) İSTATİSTİKLERİ ---
             Task.aggregate([
                 {
-                    // A. Sadece bu kullanıcıya ait görevleri al
+                    // Kullanıcıyı filtrele
                     $match: { user: userId }
                 },
                 {
-                    // B. $facet kullanarak 3 farklı hesaplamayı aynı anda yap
                     $facet: {
-                        // B1. Görev Özeti (taskSummary)
+                        // A. Genel Özet (taskSummary) - GENEL KALABİLİR veya HAFTALIK YAPILABİLİR
+                        // Genelde "Bekleyen İşler" toplam iş yükünü gösterdiği için tarih filtresi koymuyoruz.
                         "taskSummary": [
                             {
                                 $group: {
                                     _id: null,
                                     totalTasks: { $sum: 1 },
-                                    // isCompleted true ise 1, değilse 0 ekle
-                                    completedTasks: {
-                                        $sum: { $cond: ["$isCompleted", 1, 0] }
-                                    }
+                                    completedTasks: { $sum: { $cond: ["$isCompleted", 1, 0] } }
                                 }
                             }
                         ],
-                        // B2. Öncelik Dağılımı (priorityBreakdown)
+                        
+                        // B. Öncelik Dağılımı (priorityBreakdown) - ARTIK SADECE BU HAFTA
                         "priorityBreakdown": [
                             {
+                                // GÜNCELLEME: Sadece bu hafta oluşturulan görevleri al
+                                $match: { 
+                                    createdAt: { $gte: firstDayOfWeek } 
+                                }
+                            },
+                            {
                                 $group: {
-                                    _id: "$priority", // 'priority' alanına göre grupla
-                                    count: { $sum: 1 } // Her gruptaki sayıyı topla
+                                    _id: "$priority",
+                                    count: { $sum: 1 }
                                 }
                             }
                         ],
-                        // B3. Haftalık Aktivite (weeklyActivity)
+
+                        // C. Haftalık Aktivite (weeklyActivity) - SADECE BU HAFTA TAMAMLANANLAR
                         "weeklyActivity": [
                             {
-                                // Sadece bu hafta tamamlanan görevleri filtrele
+                                // GÜNCELLEME: Sadece bu hafta TAMAMLANANLAR (updatedAt)
                                 $match: {
                                     isCompleted: true,
                                     updatedAt: { $gte: firstDayOfWeek }
@@ -64,8 +75,6 @@ export const getStatsSummary = async (req, res) => {
                             },
                             {
                                 $group: {
-                                    // Tamamlanma tarihine göre haftanın gününe göre grupla
-                                    // (1: Pazar, 2: Pzt, 3: Sal, ..., 7: Cmt)
                                     _id: { $dayOfWeek: "$updatedAt" },
                                     completed: { $sum: 1 }
                                 }
@@ -78,25 +87,24 @@ export const getStatsSummary = async (req, res) => {
             // --- SORGULAMA 2: GÜNLÜK (JOURNAL) İSTATİSTİKLERİ ---
             JournalEntry.aggregate([
                 {
-                    // A. Sadece bu kullanıcıya ait kayıtları al
-                    $match: { user: userId }
+                    // GÜNCELLEME: Sadece SON 30 GÜNÜN kayıtlarını al
+                    $match: { 
+                        user: userId,
+                        createdAt: { $gte: thirtyDaysAgo } 
+                    }
                 },
                 {
-                    // B. Ruh hali dağılımı (moodHistory)
                     $group: {
-                        _id: "$mood", // 'mood' alanına göre grupla
+                        _id: "$mood",
                         count: { $sum: 1 }
                     }
                 }
             ])
         ]);
 
-        // --- VERİYİ FORMATLAMA (JSON SÖZLEŞMESİNE UYGUNLUK) ---
-        // Backend'in görevi, frontend'in istediği formatı tam olarak sağlamaktır.
-        // Sorgu sonucu boş gelse bile, varsayılan (0) değerlere sahip bir
-        // yapı (JSON Sözleşmesi) oluşturuyoruz.
+        // --- VERİYİ FORMATLAMA (JSON Sözleşmesi) ---
+        // Burası değişmedi, aynı formatı koruyoruz.
 
-        // 1. Varsayılan (default) JSON Sözleşmesi yapısı
         const statsResponse = {
             taskSummary: {
                 totalTasks: 0,
@@ -127,7 +135,7 @@ export const getStatsSummary = async (req, res) => {
             ]
         };
 
-        // 2. taskSummary verilerini doldur
+        // 1. Task Summary Doldur
         if (taskStats[0].taskSummary.length > 0) {
             const summary = taskStats[0].taskSummary[0];
             statsResponse.taskSummary.totalTasks = summary.totalTasks;
@@ -140,35 +148,30 @@ export const getStatsSummary = async (req, res) => {
             }
         }
 
-        // 3. priorityBreakdown verilerini doldur
-        // (Not: Modelimizde Türkçe 'Düşük', 'Orta', 'Yüksek' kullandığımızı varsayıyorum)
+        // 2. Priority Breakdown Doldur (Bu Hafta)
         taskStats[0].priorityBreakdown.forEach(item => {
             if (item._id === 'Yüksek') statsResponse.priorityBreakdown.high = item.count;
             if (item._id === 'Orta') statsResponse.priorityBreakdown.medium = item.count;
             if (item._id === 'Düşük') statsResponse.priorityBreakdown.low = item.count;
         });
 
-        // 4. moodHistory (Günlük) verilerini doldur
+        // 3. Mood History Doldur (Son 30 Gün)
         journalStats.forEach(item => {
             if (statsResponse.moodHistory.hasOwnProperty(item._id)) {
                 statsResponse.moodHistory[item._id] = item.count;
             }
         });
 
-        // 5. weeklyActivity verilerini doldur
-        // MongoDB Pazar=1, Pzt=2, Sal=3, Çar=4, Per=5, Cum=6, Cmt=7
-        const dayMap = {
-            2: "Pzt", 3: "Sal", 4: "Çar", 5: "Per", 6: "Cum", 7: "Cmt", 1: "Paz"
-        };
+        // 4. Weekly Activity Doldur (Bu Hafta)
+        const dayMap = { 2: "Pzt", 3: "Sal", 4: "Çar", 5: "Per", 6: "Cum", 7: "Cmt", 1: "Paz" };
         taskStats[0].weeklyActivity.forEach(item => {
-            const dayString = dayMap[item._id]; // (örn: 2 -> "Pzt")
+            const dayString = dayMap[item._id];
             const dayObject = statsResponse.weeklyActivity.find(d => d.day === dayString);
             if (dayObject) {
                 dayObject.completed = item.completed;
             }
         });
 
-        // 6. Tamamlanmış JSON'u iOS'a (StatsView) gönder
         res.json(statsResponse);
 
     } catch (err) {
